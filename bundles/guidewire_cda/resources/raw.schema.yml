@@ -1,0 +1,15 @@
+resources:
+  schemas:
+    raw_schema:
+      name: guidewire_${var.amic_environment}
+      catalog_name: ${var.lh_environment}_raw
+      comment: "Schema to house the raw Guidewire CDA Volumes for AMIC environment ${var.amic_environment}"
+      grants:
+        # Will need MANAGE permission on the schema to create volumes in it.
+        - principal: ${var.service_principal_object_owner}
+          privileges:
+            - USE_SCHEMA
+            - CREATE_TABLE
+            - CREATE_VOLUME
+            - SELECT
+            - MANAGE
