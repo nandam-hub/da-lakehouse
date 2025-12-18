@@ -1,0 +1,98 @@
+bundle:
+  name: drs__infra
+
+include:
+  - resources/raw.schema.yml
+  - resources/raw.volume.yml
+
+variables:
+  # Service Principal lookup by lh_environment
+  service_principals:
+    description: "Service Principal mapping by lh_environment"
+    type: complex
+    default:
+      dev: 8323ced5-d447-4a03-b1c9-243d5fae00c5 # enterprise_object_owner_dev
+      test: fb3648e1-7d19-4a94-a4db-5f69eaf8cf8b # enterprise_object_owner_test
+      prod: 6f148b62-472e-40c4-bb1d-35aa176822bf # enterprise_object_owner_prod
+
+  service_principal_object_owner:
+    description: "Service Principal for object ownership (resolved dynamically)"
+
+  # Environment Variables
+  amic_environment:
+    description: "The AMIC environment name to use for Schema suffix. E.g. deva, testb, qas, prod"
+  aws_environment:
+    description: "The AWS environment where the S3 Bucket is located. Either 'dev' or 'prod'"
+  lh_environment:
+    description: "The Lakehouse environment name to use for Catalog prefix. E.g. dev, test, prod"
+
+#############################################################################
+### Define blocks that can be reused in multiple targets
+#############################################################################
+
+# Used in Each Target
+workspace_config: &workspace_config
+  host: https://amic-enterprise-workspace.cloud.databricks.com/
+  # Where `databricks bundle deploy` will place the bundle contents
+  root_path: /Workspace/deployment/${var.lh_environment}/${bundle.name}/${bundle.target}/
+
+# Permissions, by lh-environment
+dev_permissions: &dev_permissions
+  - level: CAN_MANAGE
+    group_name: LakehouseEnterpriseWorkspaceAdmin
+  - level: CAN_MANAGE
+    group_name: LakehouseEnterpriseExpertDataEngineer
+  - level: CAN_MANAGE
+    user_name: ${workspace.current_user.userName}
+  - level: CAN_MANAGE
+    group_name: LakehouseEnterpriseWorkspaceDataEngineer
+  - level: CAN_VIEW
+    group_name: users
+
+  - level: CAN_MANAGE
+    service_principal_name: ${var.service_principals.dev}
+
+test_permissions: &test_permissions
+  - level: CAN_MANAGE
+    group_name: LakehouseEnterpriseWorkspaceAdmin
+  - level: CAN_MANAGE
+    group_name: LakehouseEnterpriseExpertDataEngineer
+  - level: CAN_MANAGE
+    user_name: ${workspace.current_user.userName}
+  - level: CAN_MANAGE
+    group_name: LakehouseEnterpriseWorkspaceDataEngineer
+  - level: CAN_VIEW
+    group_name: users
+
+  - level: CAN_MANAGE
+    service_principal_name: ${var.service_principals.test}
+
+# Variables, by lh-environment
+dev_variable_block: &dev_variable_block
+  service_principal_object_owner: ${var.service_principals.dev}
+  aws_environment: dev
+  lh_environment: dev
+
+test_variable_block: &test_variable_block
+  service_principal_object_owner: ${var.service_principals.test}
+  aws_environment: dev
+  lh_environment: test
+
+#############################################################################
+### Databricks Asset Bundle Deployment Targets
+#############################################################################
+
+targets:
+  dev:
+    mode: production
+    workspace: *workspace_config
+    permissions: *dev_permissions
+    variables:
+      <<: *dev_variable_block
+
+  test:
+    mode: production
+    workspace: *workspace_config
+    permissions: *test_permissions
+    variables:
+      <<: *test_variable_block
