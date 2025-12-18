@@ -1,0 +1,30 @@
+# ==============================================================================
+# Shared Configuration for All Raw Layer Databricks Asset Bundles
+# ==============================================================================
+# This file contains common variables that are reused across all bundles
+# in this repository (drs, guidewire_cda, etc.)
+#
+# Note: YAML anchors (&anchor_name) cannot be shared across files, so each
+# bundle must define its own anchors for permissions and config blocks.
+# ==============================================================================
+
+variables:
+  # Service Principal lookup by lh_environment
+  service_principals:
+    description: "Service Principal mapping by lh_environment"
+    type: complex
+    default:
+      dev: 8323ced5-d447-4a03-b1c9-243d5fae00c5 # enterprise_object_owner_dev
+      test: fb3648e1-7d19-4a94-a4db-5f69eaf8cf8b # enterprise_object_owner_test
+      prod: 6f148b62-472e-40c4-bb1d-35aa176822bf # enterprise_object_owner_prod
+
+  service_principal_object_owner:
+    description: "Service Principal for object ownership (resolved dynamically)"
+
+  # Environment Variables
+  amic_environment:
+    description: "The AMIC environment name to use for Schema suffix. E.g. deva, testb, qas, prod"
+  aws_environment:
+    description: "The AWS environment where the S3 Bucket is located. Either 'dev' or 'prod'"
+  lh_environment:
+    description: "The Lakehouse environment name to use for Catalog prefix. E.g. dev, test, prod"
