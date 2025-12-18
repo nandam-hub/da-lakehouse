@@ -1,0 +1,93 @@
+{
+    // =========================================================================
+    // Databricks Notebook Configuration
+    // =========================================================================
+    // Recognize Databricks cell markers (# COMMAND ----------)
+    "jupyter.interactiveWindow.cellMarker.codeRegex": "^# COMMAND ----------|^# Databricks notebook source|^(#\\s*%%|#\\s*\\<codecell\\>|#\\s*In\\[\\d*?\\]|#\\s*In\\[ \\])",
+    "jupyter.interactiveWindow.cellMarker.default": "# COMMAND ----------",
+
+    // Per-file interactive window mode (enables magic comments like # %% to work)
+    "jupyter.interactiveWindow.creationMode": "perFile",
+
+    // Notebook output management (prevents huge outputs, helps with git)
+    "notebook.output.textLineLimit": 1000,
+    "notebook.formatOnSave.enabled": true,
+
+    // Automatically strip outputs on save (reduces git noise)
+    "notebook.output.scrolling": true,
+    "notebook.outline.showCodeCells": true,
+
+    // =========================================================================
+    // Line Ending Configuration (Cross-Platform)
+    // =========================================================================
+    "files.eol": "\n",
+    "files.insertFinalNewline": true,
+    "files.trimTrailingWhitespace": true,
+
+    // =========================================================================
+    // Python Configuration
+    // =========================================================================
+    // Static Code Analysis settings
+    "python.analysis.extraPaths": [
+        "src", // all Python projects follow src/ structure
+        "${workspaceFolder}/typings", // Stubs for type hinting
+        "${workspaceFolder}/bundles/library_code/src", // Shared library code
+    ],
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.stubPath": "${workspaceFolder}/typings",
+
+    // Use Pylance for better type checking and IntelliSense
+    "python.languageServer": "Pylance",
+
+    // Testing configuration - all projects use pytest
+    "python.testing.pytestArgs": [
+        "."
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "python.testing.autoTestDiscoverOnSaveEnabled": true,
+
+    // =========================================================================
+    // File Explorer Configuration
+    // =========================================================================
+    // Hide Python build artifacts for cleaner workspace
+    "files.exclude": {
+        "**/*.egg-info": true,
+        "**/__pycache__": true,
+        ".pytest_cache": true,
+        ".ruff_cache": true,
+        ".mypy_cache": true,
+        "**/.venv": false // Show .venv folders (useful to see which projects have envs)
+    },
+
+    // =========================================================================
+    // Editor Behavior (language-scoped)
+    // =========================================================================
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+        }
+    },
+
+    // YAML formatting for Databricks bundles and configs
+    "[yaml]": {
+        "editor.defaultFormatter": "redhat.vscode-yaml",
+        "editor.formatOnSave": true
+    },
+
+    // =========================================================================
+    // Search and Performance
+    // =========================================================================
+    "search.exclude": {
+        "**/.venv": true,
+        "**/node_modules": true,
+        "**/.pytest_cache": true,
+        "**/.ruff_cache": true,
+        "**/.mypy_cache": true,
+        "**/build": true,
+        "**/dist": true
+    }
+}

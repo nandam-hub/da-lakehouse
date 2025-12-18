@@ -1,0 +1,103 @@
+# ==============================================================================
+# Line Ending Configuration for Cross-Platform Development
+# ==============================================================================
+# This file ensures consistent line endings across Windows, macOS, and Linux/WSL2.
+#
+# Strategy:
+#   - Repository stores files with LF endings (Unix-style)
+#   - Git normalizes line endings on commit
+#   - Developers can use their platform's native endings in working directory
+#
+# References:
+#   - https://git-scm.com/docs/gitattributes
+#   - https://docs.github.com/en/get-started/getting-started-with-git/configuring-git-to-handle-line-endings
+# ==============================================================================
+
+# Default behavior: Let Git normalize line endings to LF in repository
+* text=auto
+
+# ==============================================================================
+# Source Code - Always use LF (Unix-style)
+# ==============================================================================
+
+# Python
+*.py text eol=lf
+*.pyi text eol=lf
+*.pyx text eol=lf
+
+# Shell scripts (must use LF to work on Unix systems)
+*.sh text eol=lf
+*.bash text eol=lf
+*.zsh text eol=lf
+
+# Configuration files
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.toml text eol=lf
+*.ini text eol=lf
+*.cfg text eol=lf
+*.conf text eol=lf
+
+# Terraform
+*.tf text eol=lf
+*.tfvars text eol=lf
+*.hcl text eol=lf
+
+# Markdown and Documentation
+*.md text eol=lf
+*.txt text eol=lf
+*.rst text eol=lf
+
+# Databricks
+*.ipynb text eol=lf
+*.dbc binary
+
+# ==============================================================================
+# Windows-Specific Files - Use CRLF
+# ==============================================================================
+
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=lf
+
+# Note: PowerShell Core supports LF, so we use LF for .ps1 for consistency
+
+# ==============================================================================
+# Binary Files - Never modify
+# ==============================================================================
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.7z binary
+*.jar binary
+*.whl binary
+*.egg binary
+
+# Compiled Python
+*.pyc binary
+*.pyo binary
+*.pyd binary
+
+# ==============================================================================
+# Git Attributes for Diff and Merge
+# ==============================================================================
+
+# Show better diffs for Python files
+*.py diff=python
+
+# Show better diffs for JSON (treat as text)
+*.json diff
+
+# Lock files should not be merged
+uv.lock merge=binary
+package-lock.json merge=binary
+poetry.lock merge=binary
+Pipfile.lock merge=binary
