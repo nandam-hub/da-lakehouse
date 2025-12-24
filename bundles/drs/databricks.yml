@@ -3,8 +3,8 @@ bundle:
 
 include:
   - ../_common.yml
-  - resources/raw.schema.yml
-  - resources/raw.volume.yml
+  - resources/*.yml
+  - resources/*/*.yml
 
 #############################################################################
 ### Define blocks that can be reused in multiple targets
@@ -12,7 +12,8 @@ include:
 
 # Used in Each Target
 workspace_config: &workspace_config
-  host: https://amic-enterprise-workspace.cloud.databricks.com/
+  host: https://dbc-0c2248b3-6656.cloud.databricks.com/
+  #host: https://amic-enterprise-workspace.cloud.databricks.com/
   # Where `databricks bundle deploy` will place the bundle contents
   root_path: /Workspace/deployment/${var.lh_environment}/${bundle.name}/${bundle.target}/
 

@@ -1,0 +1,94 @@
+name: deploy Asset bundle
+
+on:
+  push:
+    branches:
+      - none
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: false
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+          - sandbox
+        default: "sandbox"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    #runs-on: ubuntu-latest
+    runs-on: self-hosted
+    env:
+      # Pull from GitHub Secrets (do NOT hard-code)
+      #DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_HOST: ""
+    steps:
+      #1.checkout code
+      - name: Checkout code
+        uses: actions/checkout@v3
+      #2 .Configure AWS credentials (Assume role)
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v5.1.1
+        with:
+          aws-region: us-east-2
+          role-to-assume: ${{secrets.AWS_IAM_ROLE}}
+          role-session-name: github-action-session
+      - name: TEST AWS credentials
+        run: aws sts get-caller-identity
+
+      - name: Deploy
+        run: |
+          # aws secretsmanager list-secrets
+          $SECRET_SP = $(aws secretsmanager get-secret-value --secret-id assetbundle-sandbox-credenttials "${{secrets.service_principal_sandbox}}" --query 'SecretString' --output text)
+           $ENVIRONMENT = "${{inputs.environment}}"
+           $secretObj = $SECRET_SP | ConvertFrom-Json
+
+           # Extract the fields (match the exact JSON property names)
+           $SERVICE_PRINCIPAL = $secretObj.service_principal_sandbox
+           $CLIENT_SECRET     = $secretObj.client_secret
+           $DATABRICKS_HOST   = $secretObj."databricks_host_${{inputs.environment}}"
+
+           Write-Host "Service principal: $SERVICE_PRINCIPAL"
+           Write-Host "Access token: $CLIENT_SECRET"
+           Write-Host "Host: $DATABRICKS_HOST"
+
+          $configPath = Join-Path $home ".databrickscfg"
+
+           # Prepare content using environment variables
+           # PowerShell environment variables are accessed via $env:<NAME>
+           # These must be present in the environment: DATABRICKS_CONFIG_PROFILE, DATABRICKS_HOST, DATABRICKS_CLIENT_ID, DATABRICKS_CLIENT_SECRET
+           $DATABRICKS_CONFIG_PROFILE = "${{inputs.environment}}"
+           $profileName   = $DATABRICKS_CONFIG_PROFILE
+           $host_url          = $DATABRICKS_HOST
+           $clientId      = $SERVICE_PRINCIPAL
+           $clientSecret  = $CLIENT_SECRET
+
+
+           # # Write the file (use ASCII or UTF8; Databricks CLI accepts both)
+           # # Using -NoNewline to avoid extra trailing newline; remove if you prefer a newline at EOF.
+           $oauth = "oauth-m2m"
+           $configLines = @(
+               "[$profileName]"
+               "host = $host_url"
+               "auth_type = $oauth"
+               "client_id = $clientId"
+               "client_secret = $clientSecret"
+           )
+
+           $configContent = ($configLines -join [Environment]::NewLine)
+
+           Set-Content -LiteralPath $configPath -Value $configContent -Encoding ASCII
+
+           Write-Host "Databricks config written to: $configPath"
+
+      - name: Deploy to Databricks
+        working-directory: dabproject
+        run: |
+          databricks bundle deploy --target ${{inputs.environment}} --profile ${{inputs.environment}}

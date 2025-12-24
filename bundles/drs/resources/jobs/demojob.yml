@@ -1,0 +1,23 @@
+resources:
+  jobs:
+    demo_job:
+      name: demo_job
+      tasks:
+        - task_key: ingestion
+          notebook_task:
+            notebook_path: ../../src/notebooks/ingestion.ipynb
+            source: WORKSPACE
+      schedule:
+        quartz_cron_expression: 11 17 09 * * ?
+        timezone_id: UTC
+        pause_status: UNPAUSED      
+      queue:
+        enabled: true
+      performance_target: PERFORMANCE_OPTIMIZED
+      permissions:
+        - level: IS_OWNER
+          service_principal_name: ${var.service_principal_sandbox}
+        - level: CAN_VIEW
+          group_name: LakehouseSandboxDataEngineer
+        - level: CAN_MANAGE
+          user_name: pevuri1534@amerisure.com

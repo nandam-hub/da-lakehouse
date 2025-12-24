@@ -1,0 +1,16 @@
+resources:
+  jobs:
+    Test1:
+      name: Test1
+      tasks:
+        - task_key: ingestion_Ntbk
+          notebook_task:
+            notebook_path: /Workspace/Users/111986ad-4fc6-45b4-9469-e7c7c581cbb6/.bundle/dabproject/dev/files/src/notebooks/ingestion
+            source: WORKSPACE
+      schedule:
+        quartz_cron_expression: 11 40 14 * * ?
+        timezone_id: UTC
+        pause_status: UNPAUSED      
+      queue:
+        enabled: true
+      performance_target: PERFORMANCE_OPTIMIZED

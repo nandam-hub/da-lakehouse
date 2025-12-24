@@ -14,7 +14,8 @@ variables:
     description: "Service Principal mapping by lh_environment"
     type: complex
     default:
-      dev: 8323ced5-d447-4a03-b1c9-243d5fae00c5 # enterprise_object_owner_dev
+      dev: 111986ad-4fc6-45b4-9469-e7c7c581cbb6
+      #dev: 8323ced5-d447-4a03-b1c9-243d5fae00c5 # enterprise_object_owner_dev
       test: fb3648e1-7d19-4a94-a4db-5f69eaf8cf8b # enterprise_object_owner_test
       prod: 6f148b62-472e-40c4-bb1d-35aa176822bf # enterprise_object_owner_prod
 
