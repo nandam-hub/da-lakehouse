@@ -8,24 +8,31 @@
 # bundle must define its own anchors for permissions and config blocks.
 # ==============================================================================
 
+# _common.yml
 variables:
-  # Service Principal lookup by lh_environment
+  # Complex variable: map environment -> service principal ID
   service_principals:
     description: "Service Principal mapping by lh_environment"
     type: complex
     default:
-      dev: 111986ad-4fc6-45b4-9469-e7c7c581cbb6
-      #dev: 8323ced5-d447-4a03-b1c9-243d5fae00c5 # enterprise_object_owner_dev
-      test: fb3648e1-7d19-4a94-a4db-5f69eaf8cf8b # enterprise_object_owner_test
-      prod: 6f148b62-472e-40c4-bb1d-35aa176822bf # enterprise_object_owner_prod
+      sandbox: 111986ad-4fc6-45b4-9469-e7c7c581cbb6
+      dev: 8323ced5-d447-4a03-b1c9-XXXXXXXX # enterprise_object_owner_dev
+      test: fb3648e1-7d19-4a94-a4db-XXXXXXX # enterprise_object_owner_test
+      prod: 6f148b62-472e-40c4-bb1d-3XXXXXXX # enterprise_object_owner_prod
 
+  # Simple variables (declared at top level; they were previously nested under service_principals, which caused warnings)
   service_principal_object_owner:
     description: "Service Principal for object ownership (resolved dynamically)"
+    default: "" # Will be overridden per target via variable blocks
 
-  # Environment Variables
   amic_environment:
-    description: "The AMIC environment name to use for Schema suffix. E.g. deva, testb, qas, prod"
+    description: "AMIC environment name for schema suffix (e.g., deva, testb, qas, prod)"
+    default: "dev"
+
   aws_environment:
-    description: "The AWS environment where the S3 Bucket is located. Either 'dev' or 'prod'"
+    description: "AWS environment where S3 is located (e.g., dev or prod)"
+    default: "dev"
+
   lh_environment:
-    description: "The Lakehouse environment name to use for Catalog prefix. E.g. dev, test, prod"
+    description: "Lakehouse environment name for catalog prefix (e.g., dev, test, prod)"
+    default: "dev"

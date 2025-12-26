@@ -2,7 +2,8 @@ resources:
   schemas:
     raw_schema:
       name: drs_raw
-      catalog_name: ${var.db_environment}_raw
+      #catalog_name: ${var.db_environment}_raw
+      catalog_name: catalog_raw
       comment: "Schema to house the raw Golden Gate DRS Volume."
       grants:
         # Will need MANAGE permission on the schema to create volumes in it.
