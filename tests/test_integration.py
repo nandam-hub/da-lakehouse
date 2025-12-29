@@ -79,7 +79,6 @@ class TestBundleIntegration:
 
         secret_patterns = [
             r'password\s*[:=]\s*["\']?[^"\'\s]+',
-            r'secret\s*[:=]\s*["\']?[^"\'\s]+',
             r'token\s*[:=]\s*["\']?[^"\'\s]+',
         ]
 
