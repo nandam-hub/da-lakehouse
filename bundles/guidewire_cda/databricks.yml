@@ -1,6 +1,8 @@
 bundle:
   name: guidewire_cda__raw
 
+resources: {}
+
 include:
   - ../_common.yml
   - resources/raw.schema.yml

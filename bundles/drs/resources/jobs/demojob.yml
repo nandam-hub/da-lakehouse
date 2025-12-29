@@ -20,4 +20,4 @@ resources:
       #   - level: CAN_VIEW
       #     group_name: LakehouseSandboxDataEngineer
       #   - level: CAN_MANAGE
-      #     user_name: pevuri1534@amerisure.com
+      #     user_name: <user-email>@<domain>.com
