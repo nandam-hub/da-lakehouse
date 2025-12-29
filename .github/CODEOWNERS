@@ -1,0 +1,25 @@
+# Global owners
+#* @data-platform-team
+
+# Bundle configurations require data engineering review
+#* bundles/ @data-engineering-team @platform-team
+
+# Infrastructure and CI/CD changes
+<!-- .github/ @devops-team @platform-team
+Dockerfile @devops-team
+docker-compose.yml @devops-team -->
+
+# Security and compliance
+<!-- scripts/pii_scanner.py @security-team @data-engineering-team
+.pre-commit-config.yaml @security-team @devops-team -->
+
+# Documentation
+*.md @data-platform-team @technical-writers
+
+# Default owners for everything (Individual users)
+#* @NReddivari1533_amic
+#* @NMarri1535_amic
+#* @PEvuri1534_amic
+
+# Default owners for everything (Team)
+* @amerisure/enterprise-lakehouse

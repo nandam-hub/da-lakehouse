@@ -1,0 +1,50 @@
+name: CI/CD Pipeline
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.13'
+
+    - name: Install dependencies
+      run: |
+        pip install pytest pyyaml jsonschema pydantic
+        pip install pre-commit
+
+    - name: Run pre-commit hooks
+      run: |
+        pre-commit install
+        pre-commit run --all-files
+
+    - name: Run unit tests
+      run: pytest tests/test_bundles.py -m "not integration"
+
+    - name: Run PII scan
+      run: python scripts/pii_scanner.py bundles/**/*.yml
+
+    - name: Validate bundles
+      run: python scripts/validate_bundles.py bundles/**/*.yml
+
+    - name: Install Databricks CLI
+      if: github.event_name == 'push'
+      run: |
+        curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+
+    - name: Run integration tests
+      if: github.event_name == 'push'
+      env:
+        DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+        DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+      run: pytest tests/test_integration.py

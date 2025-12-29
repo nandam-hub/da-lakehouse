@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  lakehouse-raw:
+    build: .
+    container_name: da-lakehouse-raw
+    environment:
+      - DATABRICKS_HOST=${DATABRICKS_HOST}
+      - DATABRICKS_TOKEN=${DATABRICKS_TOKEN}
+    volumes:
+      - .:/app
+      - /app/.git
+    command: pytest tests/ -v

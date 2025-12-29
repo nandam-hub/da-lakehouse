@@ -1,0 +1,31 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+
+  - repo: local
+    hooks:
+      - id: pii-scan
+        name: PII Scanner
+        entry: python scripts/pii_scanner.py
+        language: python
+        files: \.(yml|yaml|py|sql|json)$
+        additional_dependencies: [pydantic, pyyaml]
+
+      - id: bundle-validate
+        name: Validate Databricks Bundles
+        entry: python scripts/validate_bundles.py
+        language: python
+        files: bundles/.*\.(yml|yaml)$
+        additional_dependencies: [pyyaml, jsonschema]

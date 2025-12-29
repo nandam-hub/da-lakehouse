@@ -1,0 +1,20 @@
+addReviewers: true
+addAssignees: false
+numberOfReviewers: 2
+
+reviewers:
+  - data-platform-lead
+  - senior-data-engineer
+  - platform-architect
+
+assignees: []
+
+skipKeywords:
+  - wip
+  - draft
+
+filterLabels:
+  include:
+    - ready-for-review
+  exclude:
+    - work-in-progress
