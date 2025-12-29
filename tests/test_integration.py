@@ -12,7 +12,7 @@ class TestBundleIntegration:
     def test_bundle_validate(self, bundle_path):
         """Test databricks bundle validate command"""
         result = subprocess.run(
-            ["databricks", "bundle", "validate"],
+            ["databricks", "bundle", "validate", "--target", "sandbox"],
             cwd=bundle_path,
             capture_output=True,
             text=True
@@ -27,7 +27,7 @@ class TestBundleIntegration:
             pytest.skip("Databricks CLI not configured")
 
         result = subprocess.run(
-            ["databricks", "bundle", "plan", "--var", "lh_environment=test"],
+            ["databricks", "bundle", "plan", "--target", "sandbox", "--var", "lh_environment=sandbox"],
             cwd=bundle_path,
             capture_output=True,
             text=True
