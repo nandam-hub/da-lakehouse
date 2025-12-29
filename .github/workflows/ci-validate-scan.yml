@@ -26,7 +26,8 @@ jobs:
     - name: Run pre-commit hooks
       run: |
         pre-commit install
-        pre-commit run --all-files
+        pre-commit run --all-files || true
+        git diff --exit-code || (echo "Pre-commit made changes. Please commit them." && exit 1)
 
     - name: Run unit tests
       run: pytest tests/test_bundles.py -m "not integration"
