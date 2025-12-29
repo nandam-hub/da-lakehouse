@@ -2,6 +2,7 @@ import pytest
 import subprocess
 import os
 from pathlib import Path
+from scripts.parameter_loader import ParameterLoader
 
 class TestBundleIntegration:
 
@@ -9,28 +10,46 @@ class TestBundleIntegration:
     def bundle_path(self):
         return Path("bundles/drs")
 
-    def test_bundle_validate(self, bundle_path):
+    @pytest.fixture
+    def databricks_config(self):
+        """Load Databricks configuration from parameters.yml"""
+        loader = ParameterLoader()
+        return loader.get_databricks_config("sandbox")
+
+    def test_bundle_validate(self, bundle_path, databricks_config):
         """Test databricks bundle validate command"""
+        # Set environment variables from config
+        env = os.environ.copy()
+        env["DATABRICKS_HOST"] = databricks_config["host"]
+        env["DATABRICKS_CLIENT_ID"] = databricks_config["client_id"]
+        env["DATABRICKS_CLIENT_SECRET"] = databricks_config["client_secret"]
+        env["DATABRICKS_AUTH_TYPE"] = databricks_config["auth_type"]
+
         result = subprocess.run(
             ["databricks", "bundle", "validate", "--target", "sandbox"],
             cwd=bundle_path,
             capture_output=True,
-            text=True
+            text=True,
+            env=env
         )
 
         assert result.returncode == 0, f"Bundle validation failed: {result.stderr}"
 
-    def test_bundle_plan_dry_run(self, bundle_path):
+    def test_bundle_plan_dry_run(self, bundle_path, databricks_config):
         """Test databricks bundle plan (dry run)"""
-        # Skip if no Databricks CLI configured
-        if not os.getenv("DATABRICKS_HOST"):
-            pytest.skip("Databricks CLI not configured")
+        # Set environment variables from config
+        env = os.environ.copy()
+        env["DATABRICKS_HOST"] = databricks_config["host"]
+        env["DATABRICKS_CLIENT_ID"] = databricks_config["client_id"]
+        env["DATABRICKS_CLIENT_SECRET"] = databricks_config["client_secret"]
+        env["DATABRICKS_AUTH_TYPE"] = databricks_config["auth_type"]
 
         result = subprocess.run(
             ["databricks", "bundle", "plan", "--target", "sandbox", "--var", "lh_environment=sandbox"],
             cwd=bundle_path,
             capture_output=True,
-            text=True
+            text=True,
+            env=env
         )
 
         # Plan should succeed even without deployment

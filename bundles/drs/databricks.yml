@@ -18,7 +18,7 @@ sync:
 
 # Workspace settings used by each target
 workspace_config: &workspace_config
-  host: https://dbc-0c2248b3-6656.cloud.databricks.com/
+  host: ${var.databricks_host}
   # Where `databricks bundle deploy` will place the bundle contents
   root_path: /Workspace/deployment/${var.lh_environment}/${bundle.name}/${bundle.target}/
   #root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
@@ -145,4 +145,3 @@ targets:
 #       jobs:
 #         my_job:
 #           permissions: *test_permissions
-
