@@ -1,16 +1,17 @@
-import pytest
-import subprocess
 import os
+import subprocess
 import sys
 from pathlib import Path
+
+import pytest
 
 # Add project root to Python path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from scripts.parameter_loader import ParameterLoader
 
-class TestBundleIntegration:
 
+class TestBundleIntegration:
     @pytest.fixture
     def bundle_path(self):
         return Path("bundles/drs")
@@ -23,6 +24,11 @@ class TestBundleIntegration:
 
     def test_bundle_validate(self, bundle_path, databricks_config):
         """Test databricks bundle validate command"""
+        # Skip in CI environment due to IP restrictions
+        if os.getenv("GITHUB_ACTIONS"):
+            pytest.skip(
+                "Skipping Databricks connectivity test in CI due to IP restrictions"
+            )
         # Set environment variables from config
         env = os.environ.copy()
         env["DATABRICKS_HOST"] = databricks_config["host"]
@@ -35,13 +41,19 @@ class TestBundleIntegration:
             cwd=bundle_path,
             capture_output=True,
             text=True,
-            env=env
+            env=env,
         )
 
         assert result.returncode == 0, f"Bundle validation failed: {result.stderr}"
 
     def test_bundle_plan_dry_run(self, bundle_path, databricks_config):
         """Test databricks bundle plan (dry run)"""
+        # Skip in CI environment due to IP restrictions
+        if os.getenv("GITHUB_ACTIONS"):
+            pytest.skip(
+                "Skipping Databricks connectivity test in CI due to IP restrictions"
+            )
+
         # Set environment variables from config
         env = os.environ.copy()
         env["DATABRICKS_HOST"] = databricks_config["host"]
@@ -50,11 +62,19 @@ class TestBundleIntegration:
         env["DATABRICKS_AUTH_TYPE"] = databricks_config["auth_type"]
 
         result = subprocess.run(
-            ["databricks", "bundle", "plan", "--target", "sandbox", "--var", "lh_environment=sandbox"],
+            [
+                "databricks",
+                "bundle",
+                "plan",
+                "--target",
+                "sandbox",
+                "--var",
+                "lh_environment=sandbox",
+            ],
             cwd=bundle_path,
             capture_output=True,
             text=True,
-            env=env
+            env=env,
         )
 
         # Plan should succeed even without deployment
@@ -64,7 +84,9 @@ class TestBundleIntegration:
         """Test YAML syntax for all bundle files"""
         import yaml
 
-        bundle_files = list(Path("bundles").rglob("*.yml")) + list(Path("bundles").rglob("*.yaml"))
+        bundle_files = list(Path("bundles").rglob("*.yml")) + list(
+            Path("bundles").rglob("*.yaml")
+        )
 
         for file_path in bundle_files:
             with open(file_path) as f:
@@ -82,7 +104,9 @@ class TestBundleIntegration:
             r'token\s*[:=]\s*["\']?[^"\'\s]+',
         ]
 
-        bundle_files = list(Path("bundles").rglob("*.yml")) + list(Path("bundles").rglob("*.yaml"))
+        bundle_files = list(Path("bundles").rglob("*.yml")) + list(
+            Path("bundles").rglob("*.yaml")
+        )
 
         for file_path in bundle_files:
             with open(file_path) as f:
@@ -93,4 +117,6 @@ class TestBundleIntegration:
                 for match in matches:
                     # Allow variable references like ${var.secret}
                     if not match.group().startswith("${"):
-                        pytest.fail(f"Potential hardcoded secret in {file_path}: {match.group()}")
+                        pytest.fail(
+                            f"Potential hardcoded secret in {file_path}: {match.group()}"
+                        )

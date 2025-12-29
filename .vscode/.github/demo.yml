@@ -23,8 +23,7 @@ permissions:
 
 jobs:
   deploy:
-    #runs-on: ubuntu-latest
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     env:
       # Pull from GitHub Secrets (do NOT hard-code)
       #DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
