@@ -1,0 +1,32 @@
+# Test Environment Configuration
+environment:
+  name: test
+  lh_environment: test
+  aws_environment: dev
+
+databricks:
+  host: ${SECRET:databricks-test-credentials:host}
+  client_id: ${SECRET:databricks-test-credentials:client_id}
+  client_secret: ${SECRET:databricks-test-credentials:client_secret}
+  auth_type: oauth-m2m
+
+service_principal:
+  id: ${SECRET:databricks-test-credentials:service_principal_id}
+
+permissions:
+  - level: CAN_MANAGE
+    group_name: LakehouseEnterpriseWorkspaceAdmin
+  - level: CAN_MANAGE
+    group_name: LakehouseEnterpriseExpertDataEngineer
+  - level: CAN_MANAGE
+    user_name: ${workspace.current_user.userName}
+  - level: CAN_MANAGE
+    group_name: LakehouseEnterpriseWorkspaceDataEngineer
+  - level: CAN_VIEW
+    group_name: users
+
+# Sub-environments for test
+sub_environments:
+  - testa
+  - testb
+  - qas

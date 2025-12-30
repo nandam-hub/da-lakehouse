@@ -1,0 +1,24 @@
+# Sandbox Environment Configuration
+environment:
+  name: sandbox
+  lh_environment: sandbox
+  aws_environment: dev
+
+databricks:
+  host: ${SECRET:databricks-sandbox-credentials:host}
+  client_id: ${SECRET:databricks-sandbox-credentials:client_id}
+  client_secret: ${SECRET:databricks-sandbox-credentials:client_secret}
+  auth_type: oauth-m2m
+
+service_principal:
+  id: ${SECRET:databricks-sandbox-credentials:service_principal_id}
+
+permissions:
+  - level: CAN_MANAGE
+    group_name: LakehouseEnterpriseWorkspaceAdmin
+  - level: CAN_MANAGE
+    group_name: LakehouseEnterpriseExpertDataEngineer
+  - level: CAN_MANAGE
+    user_name: ${workspace.current_user.userName}
+  - level: CAN_VIEW
+    group_name: users
