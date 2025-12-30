@@ -23,7 +23,7 @@ class TestBundleIntegration:
             config_file = env_dir / env / "config.yml"
             assert config_file.exists(), f"Config file not found for {env}"
 
-    @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS"), reason="Skip in CI")
+    @pytest.mark.skipif(os.getenv("GITHUB_ACTIONS") is not None, reason="Skip in CI")
     def test_databricks_connectivity(self):
         """Test Databricks connectivity (skip in CI)"""
         # This would test actual Databricks connection
