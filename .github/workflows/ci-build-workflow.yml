@@ -1,6 +1,10 @@
 name: CI-Build Workflow
 
 on:
+  push:
+    branches:
+      - main
+      - 'feature/*'
   workflow_dispatch:
     inputs:
       environment:
@@ -24,11 +28,11 @@ permissions:
 
 jobs:
   call-sandbox-deployment:
-    if: ${{ inputs.environment == 'sandbox' }}
+    if: ${{ inputs.environment == 'sandbox' || github.event_name == 'push' }}
     uses: ./.github/workflows/ci-build-sandbox.yml
     with:
-      environment: ${{ inputs.environment }}
-      bundle_name: ${{ inputs.bundle_name }}
+      environment: ${{ inputs.environment || 'sandbox' }}
+      bundle_name: ${{ inputs.bundle_name || '' }}
     secrets: inherit
 
   call-dev-deployment:
@@ -56,9 +60,9 @@ jobs:
       - name: Deployment Summary
         run: |
           echo "=== CI-Build Workflow Summary ==="
-          echo "Environment: ${{ inputs.environment }}"
+          echo "Environment: ${{ inputs.environment || 'sandbox' }}"
           echo "Bundle: ${{ inputs.bundle_name || 'All bundles' }}"
-          echo "Triggered by: ${{ github.actor }}"
+          echo "Triggered by: ${{ github.event_name == 'push' && 'Push' || github.actor }}"
           echo "Branch: ${{ github.ref_name }}"
           echo "================================"
           
