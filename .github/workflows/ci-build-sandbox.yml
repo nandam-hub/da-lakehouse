@@ -1,18 +1,6 @@
 name: CI-Build Sandbox
 
 on:
-  push:
-    branches:
-      - '**'
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: "Target environment"
-        required: false
-        type: choice
-        options:
-          - sandbox
-        default: "sandbox"
   workflow_call:
     inputs:
       environment:
@@ -25,6 +13,19 @@ on:
         required: false
         type: string
         default: ""
+
+  push:
+    branches:
+      - '**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: false
+        type: choice
+        options:
+          - sandbox
+        default: "sandbox"
 
 permissions:
   id-token: write
@@ -132,7 +133,7 @@ jobs:
           if (Test-Path $configPath) {
               Get-Content $configPath
               Write-Host "=== End Config Content ==="
-              
+
               # Verify sandbox profile exists
               $configContent = Get-Content $configPath -Raw
               if ($configContent -match "\[sandbox\]") {
@@ -155,7 +156,7 @@ jobs:
             echo "Config file content:"
             cat "$HOME/.databrickscfg"
             echo "=== End Config ==="
-            
+
             if grep -q "\[sandbox\]" "$HOME/.databrickscfg"; then
               echo "✅ Sandbox profile found"
             else
@@ -175,7 +176,7 @@ jobs:
           TARGET="${{ inputs.environment || 'sandbox' }}"
           BUNDLE_NAME="${{ inputs.bundle_name || '' }}"
           echo "Deploying to target: $TARGET"
-          
+
           if [ -n "$BUNDLE_NAME" ]; then
             echo "Deploying specific bundle: $BUNDLE_NAME"
             if [ -f "bundles/$BUNDLE_NAME/databricks.yml" ]; then
