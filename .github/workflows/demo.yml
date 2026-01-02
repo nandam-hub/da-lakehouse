@@ -55,11 +55,13 @@ jobs:
 
       - name: Deploy bundles
         run: |
+          TARGET="${{ inputs.environment || 'sandbox' }}"
+          echo "Deploying to target: $TARGET"
           for bundle_dir in bundles/*/; do
             if [ -f "$bundle_dir/databricks.yml" ]; then
-              echo "Deploying bundle: $(basename $bundle_dir) to target: ${{ inputs.environment }}"
+              echo "Deploying bundle: $(basename $bundle_dir) to target: $TARGET"
               cd "$bundle_dir"
-              databricks bundle deploy --target ${{ inputs.environment }}
+              databricks bundle deploy --target "$TARGET"
               cd - > /dev/null
             fi
           done
