@@ -5,6 +5,14 @@ on:
     branches:
       - '**'
   workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: false
+        type: choice
+        options:
+          - sandbox
+        default: "sandbox"
 
 permissions:
   id-token: write
@@ -28,27 +36,59 @@ jobs:
 
       - name: Get Databricks credentials from AWS Secrets Manager
         id: get-secrets
+        shell: pwsh
         run: |
-          SECRET=$(aws secretsmanager get-secret-value --secret-id assetbundle-sandbox-credenttials --query 'SecretString' --output text)
-          echo "::add-mask::$(echo $SECRET | jq -r '.client_secret')"
-          echo "DATABRICKS_HOST=$(echo $SECRET | jq -r '.databricks_host_sandox')" >> $GITHUB_ENV
-          echo "DATABRICKS_CLIENT_ID=$(echo $SECRET | jq -r '.service_principal_sandbox')" >> $GITHUB_ENV
-          echo "DATABRICKS_CLIENT_SECRET=$(echo $SECRET | jq -r '.client_secret')" >> $GITHUB_ENV
+          # aws secretsmanager list-secrets
+          $SECRET_SP = $(aws secretsmanager get-secret-value --secret-id assetbundle-sandbox-credenttials --query 'SecretString' --output text)
+          $ENVIRONMENT = "${{inputs.environment || 'sandbox'}}"
+          $secretObj = $SECRET_SP | ConvertFrom-Json
+
+          # Extract the fields (match the exact JSON property names)
+          $SERVICE_PRINCIPAL = $secretObj.service_principal_sandbox
+          $CLIENT_SECRET     = $secretObj.client_secret
+          $DATABRICKS_HOST   = $secretObj."databricks_host_sandox"
+
+          Write-Host "Service principal: $SERVICE_PRINCIPAL"
+          Write-Host "Access token: $CLIENT_SECRET"
+          Write-Host "Host: $DATABRICKS_HOST"
+
+          $configPath = Join-Path $home ".databrickscfg"
+
+          # Prepare content using environment variables
+          $DATABRICKS_CONFIG_PROFILE = "${{inputs.environment || 'sandbox'}}"
+          $profileName   = $DATABRICKS_CONFIG_PROFILE
+          $host_url          = $DATABRICKS_HOST
+          $clientId      = $SERVICE_PRINCIPAL
+          $clientSecret  = $CLIENT_SECRET
+
+          # Write the file (use ASCII or UTF8; Databricks CLI accepts both)
+          $oauth = "oauth-m2m"
+          $configLines = @(
+              "[$profileName]"
+              "host = $host_url"
+              "auth_type = $oauth"
+              "client_id = $clientId"
+              "client_secret = $clientSecret"
+          )
+
+          $configContent = ($configLines -join [Environment]::NewLine)
+
+          Set-Content -LiteralPath $configPath -Value $configContent -Encoding ASCII
+
+          Write-Host "Databricks config written to: $configPath"
 
       - name: Setup Databricks CLI
         uses: databricks/setup-cli@main
 
       - name: Deploy bundles
         run: |
+          TARGET="${{ inputs.environment || 'sandbox' }}"
+          echo "Deploying to target: $TARGET"
           for bundle_dir in bundles/*/; do
             if [ -f "$bundle_dir/databricks.yml" ]; then
-              echo "Deploying bundle: $(basename $bundle_dir)"
+              echo "Deploying bundle: $(basename $bundle_dir) to target: $TARGET"
               cd "$bundle_dir"
-              databricks bundle deploy --target sandbox
+              databricks bundle deploy --target "$TARGET" --profile "$TARGET"
               cd - > /dev/null
             fi
           done
-        env:
-          DATABRICKS_HOST: ${{ env.DATABRICKS_HOST }}
-          DATABRICKS_CLIENT_ID: ${{ env.DATABRICKS_CLIENT_ID }}
-          DATABRICKS_CLIENT_SECRET: ${{ env.DATABRICKS_CLIENT_SECRET }}
