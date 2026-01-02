@@ -1,0 +1,64 @@
+name: CI-Build Dev
+
+on:
+  push:
+    branches:
+      - 'DA-*'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Dev target (deva or devb)"
+        required: true
+        type: choice
+        options:
+          - deva
+          - devb
+        default: "deva"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: dev
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: us-east-2
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          role-session-name: github-action-dev
+
+      - name: Get Databricks credentials from AWS Secrets Manager
+        id: get-secrets
+        run: |
+          SECRET=$(aws secretsmanager get-secret-value --secret-id assetbundle-dev-credentials --query 'SecretString' --output text)
+          echo "::add-mask::$(echo $SECRET | jq -r '.client_secret')"
+          echo "DATABRICKS_HOST=$(echo $SECRET | jq -r '.databricks_host_dev')" >> $GITHUB_ENV
+          echo "DATABRICKS_CLIENT_ID=$(echo $SECRET | jq -r '.service_principal_dev')" >> $GITHUB_ENV
+          echo "DATABRICKS_CLIENT_SECRET=$(echo $SECRET | jq -r '.client_secret')" >> $GITHUB_ENV
+
+      - name: Setup Databricks CLI
+        uses: databricks/setup-cli@main
+
+      - name: Deploy bundles
+        run: |
+          TARGET="${{ github.event.inputs.target || 'deva' }}"
+          for bundle_dir in bundles/*/; do
+            if [ -f "$bundle_dir/databricks.yml" ]; then
+              echo "Deploying bundle: $(basename $bundle_dir) to target: $TARGET"
+              cd "$bundle_dir"
+              databricks bundle deploy --target $TARGET
+              cd - > /dev/null
+            fi
+          done
+        env:
+          DATABRICKS_HOST: ${{ env.DATABRICKS_HOST }}
+          DATABRICKS_CLIENT_ID: ${{ env.DATABRICKS_CLIENT_ID }}
+          DATABRICKS_CLIENT_SECRET: ${{ env.DATABRICKS_CLIENT_SECRET }}
