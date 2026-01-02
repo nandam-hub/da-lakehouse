@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - '**'
+    paths:
+      - '**'
+      - '!.github/workflows/**'
   workflow_dispatch:
     inputs:
       environment:
@@ -11,6 +14,7 @@ on:
         required: false
         type: choice
         options:
+          - dev
           - sandbox
         default: "sandbox"
 
@@ -76,6 +80,8 @@ jobs:
           Set-Content -LiteralPath $configPath -Value $configContent -Encoding ASCII
 
           Write-Host "Databricks config written to: $configPath"
+          Write-Host "Config content:"
+          Get-Content $configPath
 
       - name: Setup Databricks CLI
         uses: databricks/setup-cli@main
