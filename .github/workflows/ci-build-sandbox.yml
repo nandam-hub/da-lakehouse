@@ -3,11 +3,7 @@ name: CI-Build Sandbox
 on:
   push:
     branches:
-      - 'main'
       - '**'
-    paths:
-      - '**'
-      - '!.github/workflows/**'
   workflow_dispatch:
     inputs:
       environment:
@@ -15,7 +11,6 @@ on:
         required: false
         type: choice
         options:
-          - dev
           - sandbox
         default: "sandbox"
 
