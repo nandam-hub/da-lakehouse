@@ -29,9 +29,9 @@ jobs:
       - name: Get Databricks credentials from AWS Secrets Manager
         id: get-secrets
         run: |
-          SECRET=$(aws secretsmanager get-secret-value --secret-id assetbundle-sandbox-credentials --query 'SecretString' --output text)
+          SECRET=$(aws secretsmanager get-secret-value --secret-id assetbundle-sandbox-credenttials --query 'SecretString' --output text)
           echo "::add-mask::$(echo $SECRET | jq -r '.client_secret')"
-          echo "DATABRICKS_HOST=$(echo $SECRET | jq -r '.databricks_host_sandbox')" >> $GITHUB_ENV
+          echo "DATABRICKS_HOST=$(echo $SECRET | jq -r '.databricks_host_sandox')" >> $GITHUB_ENV
           echo "DATABRICKS_CLIENT_ID=$(echo $SECRET | jq -r '.service_principal_sandbox')" >> $GITHUB_ENV
           echo "DATABRICKS_CLIENT_SECRET=$(echo $SECRET | jq -r '.client_secret')" >> $GITHUB_ENV
 

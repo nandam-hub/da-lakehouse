@@ -45,8 +45,8 @@ jobs:
         run: |
           case "${{ github.event.inputs.environment }}" in
             sandbox)
-              echo "secret_name=assetbundle-sandbox-credentials" >> $GITHUB_OUTPUT
-              echo "host_key=databricks_host_sandbox" >> $GITHUB_OUTPUT
+              echo "secret_name=assetbundle-sandbox-credenttials" >> $GITHUB_OUTPUT
+              echo "host_key=databricks_host_sandox" >> $GITHUB_OUTPUT
               echo "sp_key=service_principal_sandbox" >> $GITHUB_OUTPUT
               ;;
             deva|devb)
