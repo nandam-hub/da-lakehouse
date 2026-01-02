@@ -116,8 +116,44 @@ jobs:
           Set-Content -LiteralPath $configPath -Value $finalContent -Encoding ASCII
 
           Write-Host "Databricks config written to: $configPath"
-          Write-Host "Config content:"
-          Get-Content $configPath
+          Write-Host "=== Final Config Content ==="
+          if (Test-Path $configPath) {
+              Get-Content $configPath
+              Write-Host "=== End Config Content ==="
+              
+              # Verify sandbox profile exists
+              $configContent = Get-Content $configPath -Raw
+              if ($configContent -match "\[sandbox\]") {
+                  Write-Host "✅ SUCCESS: Sandbox profile created successfully"
+              } else {
+                  Write-Host "❌ ERROR: Sandbox profile NOT found in config file"
+                  Write-Host "Config file size: $((Get-Item $configPath).Length) bytes"
+                  exit 1
+              }
+          } else {
+              Write-Host "❌ ERROR: Config file was not created at $configPath"
+              exit 1
+          }
+
+      - name: Verify Databricks Profile
+        run: |
+          echo "=== Verifying Databricks Profile ==="
+          if [ -f "$HOME/.databrickscfg" ]; then
+            echo "Config file exists"
+            echo "Config file content:"
+            cat "$HOME/.databrickscfg"
+            echo "=== End Config ==="
+            
+            if grep -q "\[sandbox\]" "$HOME/.databrickscfg"; then
+              echo "✅ Sandbox profile found"
+            else
+              echo "❌ Sandbox profile NOT found"
+              exit 1
+            fi
+          else
+            echo "❌ Config file does not exist"
+            exit 1
+          fi
 
       - name: Setup Databricks CLI
         uses: databricks/setup-cli@main
