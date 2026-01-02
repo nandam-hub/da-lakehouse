@@ -13,6 +13,18 @@ on:
         options:
           - sandbox
         default: "sandbox"
+  workflow_call:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: false
+        type: string
+        default: "sandbox"
+      bundle_name:
+        description: "Specific bundle to deploy (optional)"
+        required: false
+        type: string
+        default: ""
 
 permissions:
   id-token: write
@@ -161,12 +173,27 @@ jobs:
       - name: Deploy bundles
         run: |
           TARGET="${{ inputs.environment || 'sandbox' }}"
+          BUNDLE_NAME="${{ inputs.bundle_name || '' }}"
           echo "Deploying to target: $TARGET"
-          for bundle_dir in bundles/*/; do
-            if [ -f "$bundle_dir/databricks.yml" ]; then
-              echo "Deploying bundle: $(basename $bundle_dir) to target: $TARGET"
-              cd "$bundle_dir"
+          
+          if [ -n "$BUNDLE_NAME" ]; then
+            echo "Deploying specific bundle: $BUNDLE_NAME"
+            if [ -f "bundles/$BUNDLE_NAME/databricks.yml" ]; then
+              cd "bundles/$BUNDLE_NAME"
               databricks bundle deploy --target "$TARGET" --profile "$TARGET"
               cd - > /dev/null
+            else
+              echo "❌ Bundle not found: $BUNDLE_NAME"
+              exit 1
             fi
-          done
+          else
+            echo "Deploying all bundles"
+            for bundle_dir in bundles/*/; do
+              if [ -f "$bundle_dir/databricks.yml" ]; then
+                echo "Deploying bundle: $(basename $bundle_dir) to target: $TARGET"
+                cd "$bundle_dir"
+                databricks bundle deploy --target "$TARGET" --profile "$TARGET"
+                cd - > /dev/null
+              fi
+            done
+          fi
