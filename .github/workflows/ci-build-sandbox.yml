@@ -21,7 +21,7 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: sandbox
+    # environment: sandbox
 
     steps:
       - name: Checkout code
@@ -41,18 +41,18 @@ jobs:
           # Get secret from AWS Secrets Manager
           Write-Host "Fetching secret from AWS Secrets Manager..."
           $SECRET_SP = $(aws secretsmanager get-secret-value --secret-id assetbundle-sandbox-credenttials --query 'SecretString' --output text)
-          
+
           if (-not $SECRET_SP) {
               Write-Host "ERROR: Failed to retrieve secret from AWS Secrets Manager"
               exit 1
           }
-          
+
           Write-Host "Secret retrieved successfully"
           Write-Host "Raw secret (first 50 chars): $($SECRET_SP.Substring(0, [Math]::Min(50, $SECRET_SP.Length)))..."
-          
+
           $ENVIRONMENT = "${{inputs.environment || 'sandbox'}}"
           Write-Host "Target environment: $ENVIRONMENT"
-          
+
           try {
               $secretObj = $SECRET_SP | ConvertFrom-Json
               Write-Host "Secret parsed successfully"
@@ -71,7 +71,7 @@ jobs:
           Write-Host "Service principal: $SERVICE_PRINCIPAL"
           Write-Host "Host: $DATABRICKS_HOST"
           Write-Host "Client secret length: $($CLIENT_SECRET.Length)"
-          
+
           # Validate required fields
           if (-not $SERVICE_PRINCIPAL -or -not $CLIENT_SECRET -or -not $DATABRICKS_HOST) {
               Write-Host "ERROR: Missing required fields in secret"
