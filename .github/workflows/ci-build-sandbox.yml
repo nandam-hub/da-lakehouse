@@ -3,6 +3,7 @@ name: CI-Build Sandbox
 on:
   push:
     branches:
+      - 'main'
       - '**'
     paths:
       - '**'
