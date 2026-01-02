@@ -65,7 +65,7 @@ jobs:
           # Extract the fields (match the exact JSON property names)
           $SERVICE_PRINCIPAL = $secretObj.service_principal_sandbox
           $CLIENT_SECRET     = $secretObj.client_secret
-          $DATABRICKS_HOST   = $secretObj."databricks_host_sandox"
+          $DATABRICKS_HOST   = $secretObj."databricks_host_sandbox"
 
           Write-Host "=== Extracted Values ==="
           Write-Host "Service principal: $SERVICE_PRINCIPAL"
