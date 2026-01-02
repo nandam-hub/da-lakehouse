@@ -1,0 +1,87 @@
+name: CI-Build Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: false
+        type: choice
+        options:
+          - sandbox
+          - dev
+          - test
+        default: "sandbox"
+      bundle_name:
+        description: "Specific bundle to deploy (optional)"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  call-sandbox-deployment:
+    if: ${{ inputs.environment == 'sandbox' }}
+    uses: ./.github/workflows/ci-build-sandbox.yml
+    with:
+      environment: ${{ inputs.environment }}
+      bundle_name: ${{ inputs.bundle_name }}
+    secrets: inherit
+
+  call-dev-deployment:
+    if: ${{ inputs.environment == 'dev' }}
+    uses: ./.github/workflows/ci-build-dev.yml
+    with:
+      environment: ${{ inputs.environment }}
+      bundle_name: ${{ inputs.bundle_name }}
+    secrets: inherit
+
+  call-test-deployment:
+    if: ${{ inputs.environment == 'test' }}
+    uses: ./.github/workflows/ci-build-test.yml
+    with:
+      environment: ${{ inputs.environment }}
+      bundle_name: ${{ inputs.bundle_name }}
+    secrets: inherit
+
+  summary:
+    runs-on: ubuntu-latest
+    needs: [call-sandbox-deployment, call-dev-deployment, call-test-deployment]
+    if: always()
+    
+    steps:
+      - name: Deployment Summary
+        run: |
+          echo "=== CI-Build Workflow Summary ==="
+          echo "Environment: ${{ inputs.environment }}"
+          echo "Bundle: ${{ inputs.bundle_name || 'All bundles' }}"
+          echo "Triggered by: ${{ github.actor }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "================================"
+          
+          if [ "${{ needs.call-sandbox-deployment.result }}" == "success" ]; then
+            echo "✅ Sandbox deployment: SUCCESS"
+          elif [ "${{ needs.call-sandbox-deployment.result }}" == "failure" ]; then
+            echo "❌ Sandbox deployment: FAILED"
+          elif [ "${{ needs.call-sandbox-deployment.result }}" == "skipped" ]; then
+            echo "⏭️ Sandbox deployment: SKIPPED"
+          fi
+          
+          if [ "${{ needs.call-dev-deployment.result }}" == "success" ]; then
+            echo "✅ Dev deployment: SUCCESS"
+          elif [ "${{ needs.call-dev-deployment.result }}" == "failure" ]; then
+            echo "❌ Dev deployment: FAILED"
+          elif [ "${{ needs.call-dev-deployment.result }}" == "skipped" ]; then
+            echo "⏭️ Dev deployment: SKIPPED"
+          fi
+          
+          if [ "${{ needs.call-test-deployment.result }}" == "success" ]; then
+            echo "✅ Test deployment: SUCCESS"
+          elif [ "${{ needs.call-test-deployment.result }}" == "failure" ]; then
+            echo "❌ Test deployment: FAILED"
+          elif [ "${{ needs.call-test-deployment.result }}" == "skipped" ]; then
+            echo "⏭️ Test deployment: SKIPPED"
+          fi
