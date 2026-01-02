@@ -1,0 +1,69 @@
+name: Deploy Asset Bundle
+
+on:
+  push:
+    branches:
+      - none
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: false
+        type: choice
+        options:
+          - sandbox
+          - deva
+          - devb
+          - testa
+          - testb
+          - qas
+        default: "sandbox"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: us-east-2
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          role-session-name: github-action-session
+          
+      - name: Test AWS credentials
+        run: aws sts get-caller-identity
+
+      - name: Get Databricks credentials from AWS Secrets Manager
+        id: get-secrets
+        run: |
+          SECRET=$(aws secretsmanager get-secret-value --secret-id assetbundle-sandbox-credenttials --query 'SecretString' --output text)
+          echo "::add-mask::$(echo $SECRET | jq -r '.client_secret')"
+          echo "DATABRICKS_HOST=$(echo $SECRET | jq -r '.databricks_host_sandox')" >> $GITHUB_ENV
+          echo "DATABRICKS_CLIENT_ID=$(echo $SECRET | jq -r '.service_principal_sandbox')" >> $GITHUB_ENV
+          echo "DATABRICKS_CLIENT_SECRET=$(echo $SECRET | jq -r '.client_secret')" >> $GITHUB_ENV
+
+      - name: Setup Databricks CLI
+        uses: databricks/setup-cli@main
+
+      - name: Deploy bundles
+        run: |
+          for bundle_dir in bundles/*/; do
+            if [ -f "$bundle_dir/databricks.yml" ]; then
+              echo "Deploying bundle: $(basename $bundle_dir) to target: ${{ inputs.environment }}"
+              cd "$bundle_dir"
+              databricks bundle deploy --target ${{ inputs.environment }}
+              cd - > /dev/null
+            fi
+          done
+        env:
+          DATABRICKS_HOST: ${{ env.DATABRICKS_HOST }}
+          DATABRICKS_CLIENT_ID: ${{ env.DATABRICKS_CLIENT_ID }}
+          DATABRICKS_CLIENT_SECRET: ${{ env.DATABRICKS_CLIENT_SECRET }}
