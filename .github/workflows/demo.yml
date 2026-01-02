@@ -3,7 +3,7 @@ name: Deploy Asset Bundle
 on:
   push:
     branches:
-      - none
+      - 'features/*'
   workflow_dispatch:
     inputs:
       environment:
