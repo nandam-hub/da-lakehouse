@@ -54,16 +54,24 @@ jobs:
 
           $configPath = Join-Path $home ".databrickscfg"
 
-          # Prepare content using environment variables
+          # Read existing config if it exists
+          $existingContent = ""
+          if (Test-Path $configPath) {
+              $existingContent = Get-Content $configPath -Raw
+              Write-Host "Existing config found"
+          }
+
+          # Prepare new profile content
           $DATABRICKS_CONFIG_PROFILE = "${{inputs.environment || 'sandbox'}}"
           $profileName   = $DATABRICKS_CONFIG_PROFILE
           $host_url          = $DATABRICKS_HOST
           $clientId      = $SERVICE_PRINCIPAL
           $clientSecret  = $CLIENT_SECRET
 
-          # Write the file (use ASCII or UTF8; Databricks CLI accepts both)
+          # Create new profile section
           $oauth = "oauth-m2m"
-          $configLines = @(
+          $newProfileLines = @(
+              ""
               "[$profileName]"
               "host = $host_url"
               "auth_type = $oauth"
@@ -71,9 +79,14 @@ jobs:
               "client_secret = $clientSecret"
           )
 
-          $configContent = ($configLines -join [Environment]::NewLine)
+          $newProfileContent = ($newProfileLines -join [Environment]::NewLine)
 
-          Set-Content -LiteralPath $configPath -Value $configContent -Encoding ASCII
+          # Remove existing profile if it exists, then append new one
+          $pattern = "\[" + [regex]::Escape($profileName) + "\][\s\S]*?(?=\n\[|$)"
+          $updatedContent = $existingContent -replace $pattern, ""
+          $finalContent = $updatedContent.TrimEnd() + $newProfileContent
+
+          Set-Content -LiteralPath $configPath -Value $finalContent -Encoding ASCII
 
           Write-Host "Databricks config written to: $configPath"
           Write-Host "Config content:"
