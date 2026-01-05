@@ -3,15 +3,25 @@ name: CI-Build Test
 on:
   workflow_dispatch:
     inputs:
-      target:
-        description: "Test target"
-        required: true
+      branch:
+        description: 'Branch to build'
+        required: false
+        type: string
+        default: 'main'
+      environment:
+        description: 'Target environment'
+        required: false
         type: choice
         options:
-          - testa
-          - testb
-          - qas
-        default: "testa"
+          - dev
+          - test
+          - sandbox
+        default: 'test'
+      image_tag:
+        description: 'Custom image tag'
+        required: false
+        type: string
+        default: 'latest'
 
 permissions:
   id-token: write
@@ -26,10 +36,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Load AWS Region
+        id: load-region
+        run: |
+          AWS_REGION=$(yq '.environment_variables.AWS_REGION' .github/workflows/parameters.yml)
+          echo "AWS_REGION=$AWS_REGION" >> $GITHUB_ENV
+          echo "aws-region=$AWS_REGION" >> $GITHUB_OUTPUT
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-region: us-east-2
+          aws-region: ${{ steps.load-region.outputs.aws-region }}
           role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
           role-session-name: github-action-test
 
@@ -47,7 +64,7 @@ jobs:
 
       - name: Deploy bundles
         run: |
-          TARGET="${{ github.event.inputs.target || 'testa' }}"
+          TARGET="${{ github.event.inputs.environment || 'test' }}"
           for bundle_dir in bundles/*/; do
             if [ -f "$bundle_dir/databricks.yml" ]; then
               echo "Deploying bundle: $(basename $bundle_dir) to target: $TARGET"

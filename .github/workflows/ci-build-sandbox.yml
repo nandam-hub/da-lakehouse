@@ -40,12 +40,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Load AWS Region
+        id: load-region
+        run: |
+          AWS_REGION=$(yq '.environment_variables.AWS_REGION' .github/workflows/parameters.yml)
+          echo "AWS_REGION=$AWS_REGION" >> $GITHUB_ENV
+          echo "aws-region=$AWS_REGION" >> $GITHUB_OUTPUT
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-region: us-east-2
+          aws-region: ${{ steps.load-region.outputs.aws-region }}
           role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
-          role-session-name: github-action-sandbox
+          role-session-name: github-action-${{ inputs.environment || 'sandbox' }}
 
       - name: Get Databricks credentials from AWS Secrets Manager
         id: get-secrets

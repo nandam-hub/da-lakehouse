@@ -1,0 +1,54 @@
+parameters:
+  workflow_inputs:
+    branch:
+      description: "Branch to build"
+      required: false
+      type: string
+      default: "main"
+    environment:
+      description: "Target environment"
+      required: false
+      type: choice
+      options:
+        - dev
+        - test
+        - sandbox
+      default: "sandbox"
+    image_tag:
+      description: "Custom image tag"
+      required: false
+      type: string
+      default: "latest"
+
+  environment_variables:
+    ECR_REGISTRY: "125067017412.dkr.ecr.us-east-2.amazonaws.com/dasandboxecr"
+    AWS_REGION: "us-east-2"
+    IMAGE_NAME: "dasandboxecr"
+
+  linting:
+    tools:
+      - black
+      - flake8
+      - pylint
+      - bandit
+    python_version: "3.13"
+
+  security_scanning:
+    tools:
+      - trivy
+      - bandit
+    severity_levels:
+      - critical
+      - high
+    fail_on_severity: true
+
+  secrets:
+    - AWS_IAM_ROLE
+    - ECR_REGISTRY_SECRET
+
+  permissions:
+    contents: read
+    id-token: write
+
+  runner:
+    type: ubuntu-latest
