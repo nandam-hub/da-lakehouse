@@ -32,27 +32,39 @@ permissions:
   contents: read
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    # environment: sandbox
+  build:
+    uses: ./.github/workflows/build-template.yml
+    with:
+      environment: ${{ inputs.environment || 'sandbox' }}
+      image_tag: 'latest'
+    secrets: inherit
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
+
+      - name: Install yq
+        run: sudo snap install yq
 
       - name: Load AWS Region
         id: load-region
         run: |
-          AWS_REGION=$(yq '.parameters.environment_variables.AWS_REGION' .github/parameters.yml)
+          AWS_REGION=$(yq eval '.parameters.environment_variables.AWS_REGION' .github/parameters.yml)
           echo "AWS_REGION=$AWS_REGION" >> $GITHUB_ENV
           echo "aws-region=$AWS_REGION" >> $GITHUB_OUTPUT
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-region: ${{ steps.load-region.outputs.aws-region }}
           role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
-          role-session-name: github-action-${{ inputs.environment || 'sandbox' }}
+          aws-region: ${{ steps.load-region.outputs.aws-region }}
+          audience: sts.amazonaws.com
 
       - name: Get Databricks credentials from AWS Secrets Manager
         id: get-secrets

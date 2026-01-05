@@ -1,0 +1,117 @@
+name: Build Template
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: false
+        type: string
+        default: 'sandbox'
+      image_tag:
+        description: 'Custom image tag'
+        required: false
+        type: string
+        default: 'latest'
+  push:
+    branches:
+      - 'main'
+      #- 'feature/**'
+    paths:
+      - '**'
+      - '!.github/workflows/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: false
+        type: choice
+        options:
+          - dev
+          - test
+          - sandbox
+        default: 'sandbox'
+      image_tag:
+        description: 'Custom image tag'
+        required: false
+        type: string
+        default: 'latest'
+
+jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      has-changes: ${{ steps.changes.outputs.has-changes }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+      - name: Check for actual changes
+        id: changes
+        run: |
+          if [ "${{ github.event.forced }}" == "true" ] || [ "${{ github.event.created }}" == "true" ]; then
+            echo "has-changes=false" >> $GITHUB_OUTPUT
+          elif git diff --quiet HEAD~1 HEAD; then
+            echo "has-changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has-changes=true" >> $GITHUB_OUTPUT
+          fi
+
+  build-and-push:
+    needs: check-changes
+    if: needs.check-changes.outputs.has-changes == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      security-events: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+
+      - name: Install yq
+        run: sudo snap install yq
+      - name: Load parameters and environment variables
+        id: env-vars
+        run: |
+          ECR_REGISTRY=$(yq eval '.parameters.environment_variables.ECR_REGISTRY' .github/parameters.yml)
+          AWS_REGION=$(yq eval '.parameters.environment_variables.AWS_REGION' .github/parameters.yml)
+          IMAGE_NAME=$(yq eval '.parameters.environment_variables.IMAGE_NAME' .github/parameters.yml)
+          echo "ECR_REGISTRY=$ECR_REGISTRY" >> $GITHUB_OUTPUT
+          echo "AWS_REGION=$AWS_REGION" >> $GITHUB_OUTPUT
+          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_OUTPUT
+          echo "ENVIRONMENT=${{ inputs.environment || 'dev' }}" >> $GITHUB_OUTPUT
+          echo "IMAGE_TAG=${{ inputs.image_tag || 'latest' }}" >> $GITHUB_OUTPUT
+      - name: Determine short commit SHA
+        id: vars
+        run: |
+          echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          aws-region: ${{ steps.env-vars.outputs.AWS_REGION }}
+          audience: sts.amazonaws.com
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build Docker image
+        run: |
+          docker build --target production -t ${{ steps.env-vars.outputs.IMAGE_NAME }}:${{ steps.vars.outputs.SHORT_SHA }} .
+      - name: Tag Docker image for ECR
+        run: |
+          docker tag ${{ steps.env-vars.outputs.IMAGE_NAME }}:${{ steps.vars.outputs.SHORT_SHA }} \
+          ${{ steps.env-vars.outputs.ECR_REGISTRY }}:${{ steps.vars.outputs.SHORT_SHA }}
+          docker tag ${{ steps.env-vars.outputs.IMAGE_NAME }}:${{ steps.vars.outputs.SHORT_SHA }} \
+          ${{ steps.env-vars.outputs.ECR_REGISTRY }}:latest
+      - name: Push Docker image to Amazon ECR
+        run: |
+          docker push ${{ steps.env-vars.outputs.ECR_REGISTRY }}:${{ steps.vars.outputs.SHORT_SHA }}
+          docker push ${{ steps.env-vars.outputs.ECR_REGISTRY }}:latest
+      # - name: Deploy to ECS
+      #   run: |
+      #     aws ecs update-service --cluster da-lakehouse-cda-dev --service da-lakehouse-cda-dev --force-new-deployment

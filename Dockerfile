@@ -1,4 +1,5 @@
-FROM python:3.13-slim
+# Development stage
+FROM python:3.13-slim AS development
 
 WORKDIR /app
 
@@ -27,3 +28,26 @@ ENV PATH="/root/.databricks/bin:${PATH}"
 
 # Default command
 CMD ["pytest", "tests/"]
+
+# Production stage
+FROM python:3.13-slim AS production
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Databricks CLI
+RUN curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+
+# Copy only production files
+COPY bundles/ ./bundles/
+COPY databricks.yml .
+
+# Set environment variables
+ENV PATH="/root/.databricks/bin:${PATH}"
+
+# Default command
+CMD ["databricks", "bundle", "validate"]
