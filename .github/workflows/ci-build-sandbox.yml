@@ -30,6 +30,7 @@ on:
 permissions:
   id-token: write
   contents: read
+  security-events: write
 
 jobs:
   build:
@@ -38,6 +39,9 @@ jobs:
       environment: ${{ inputs.environment || 'sandbox' }}
       image_tag: 'latest'
     secrets: inherit
+    permissions:
+      contents: read
+      id-token: write
 
   deploy:
     needs: build
