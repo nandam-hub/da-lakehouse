@@ -44,10 +44,10 @@ RUN curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/insta
 
 # Copy only production files
 COPY bundles/ ./bundles/
-COPY databricks.yml .
+COPY .github/parameters.yml ./.github/parameters.yml
 
 # Set environment variables
 ENV PATH="/root/.databricks/bin:${PATH}"
 
 # Default command
-CMD ["databricks", "bundle", "validate"]
+CMD ["databricks", "bundle", "validate", "--target", "sandbox"]
