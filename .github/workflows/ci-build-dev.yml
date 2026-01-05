@@ -42,7 +42,7 @@ jobs:
       - name: Load AWS Region
         id: load-region
         run: |
-          AWS_REGION=$(yq '.environment_variables.AWS_REGION' .github/workflows/parameters.yml)
+          AWS_REGION=$(yq '.parameters.environment_variables.AWS_REGION' .github/parameters.yml)
           echo "AWS_REGION=$AWS_REGION" >> $GITHUB_ENV
           echo "aws-region=$AWS_REGION" >> $GITHUB_OUTPUT
 
