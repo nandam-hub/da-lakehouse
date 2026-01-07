@@ -76,7 +76,7 @@ jobs:
         run: |
           # Get secret from AWS Secrets Manager
           Write-Host "Fetching secret from AWS Secrets Manager..."
-          $SECRET_SP = $(aws secretsmanager get-secret-value --secret-id assetbundle-sandbox-credentials --query 'SecretString' --output text)
+          $SECRET_SP = $(aws secretsmanager get-secret-value --secret-id assetbundle-sandbox-credenttials --query 'SecretString' --output text)
 
           if (-not $SECRET_SP) {
               Write-Host "ERROR: Failed to retrieve secret from AWS Secrets Manager"
