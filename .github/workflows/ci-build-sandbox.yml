@@ -208,7 +208,7 @@ jobs:
         run: |
           # Install the new Databricks CLI using pip
           pip install databricks-cli --upgrade
-          
+
           # Verify installation
           try {
             databricks --version
@@ -219,7 +219,7 @@ jobs:
           }
 
       - name: Deploy bundles
-        shell: powershell -ExecutionPolicy Bypass
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -Command "{0}"
         run: |
           $TARGET      = "${{ inputs.environment || 'sandbox' }}"
           $BUNDLE_NAME = "${{ inputs.bundle_name || '' }}"
