@@ -206,19 +206,17 @@ jobs:
       - name: Setup Databricks CLI
         shell: powershell -NoProfile -ExecutionPolicy Bypass -Command "{0}"
         run: |
-          # Download and install Databricks CLI
-          $url = "https://github.com/databricks/cli/releases/latest/download/databricks_cli_windows_amd64.zip"
-          $zip = "$env:TEMP\databricks_cli.zip"
-          $extractPath = "$env:TEMP\databricks_cli"
-
-          Invoke-WebRequest -Uri $url -OutFile $zip
-          Expand-Archive -Path $zip -DestinationPath $extractPath -Force
-
-          # Add to PATH for this session
-          $env:PATH = "$extractPath;$env:PATH"
-
+          # Install the new Databricks CLI using pip
+          pip install databricks-cli --upgrade
+          
           # Verify installation
-          & "$extractPath\databricks.exe" version
+          try {
+            databricks --version
+            Write-Host "✅ Databricks CLI installed successfully"
+          } catch {
+            Write-Host "❌ Failed to verify Databricks CLI installation"
+            exit 1
+          }
 
       - name: Deploy bundles
         shell: powershell -ExecutionPolicy Bypass
@@ -248,7 +246,4 @@ jobs:
                 Pop-Location
               }
             }
-          }f (-not $AWS_REGION) { Write-Host "❌ AWS_REGION not found in parameters.yml"; exit 1 }
-
-          Write-Host "AWS_REGION = $AWS_REGION"
-          # Export to env and outputs
+          }
