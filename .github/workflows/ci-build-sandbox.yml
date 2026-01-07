@@ -45,7 +45,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: sandbox-runner
+    runs-on: self-hosted
     permissions:
       contents: read
       id-token: write
