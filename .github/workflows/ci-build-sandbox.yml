@@ -209,33 +209,53 @@ jobs:
       - name: Setup Databricks CLI
         shell: powershell -NoProfile -ExecutionPolicy Bypass -Command "{0}"
         run: |
-          # Install the new Databricks CLI using pip
-          pip install databricks-cli --upgrade
-
-          # Verify installation
+          # Remove old databricks-cli if it exists
+          pip uninstall databricks-cli -y 2>$null
+          
+          # Install the new Databricks CLI
+          $url = "https://github.com/databricks/cli/releases/latest/download/databricks_cli_windows_amd64.zip"
+          $zip = "$env:TEMP\databricks_cli.zip"
+          $extractPath = "$env:TEMP\databricks_cli"
+          
           try {
-            databricks --version
-            Write-Host "✅ Databricks CLI installed successfully"
+            # Get the latest release info
+            $response = Invoke-RestMethod -Uri "https://api.github.com/repos/databricks/cli/releases/latest"
+            $asset = $response.assets | Where-Object { $_.name -like "*windows*amd64*" }
+            
+            if ($asset) {
+              Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $zip
+              Expand-Archive -Path $zip -DestinationPath $extractPath -Force
+              
+              # Add to PATH for this session
+              $env:PATH = "$extractPath;$env:PATH"
+              
+              # Verify installation
+              & "$extractPath\databricks.exe" version
+              Write-Host "✅ New Databricks CLI installed successfully"
+            } else {
+              throw "Windows asset not found"
+            }
           } catch {
-            Write-Host "❌ Failed to verify Databricks CLI installation"
+            Write-Host "❌ Failed to install new Databricks CLI: $($_.Exception.Message)"
             exit 1
           }
 
       - name: Deploy bundles
         shell: powershell -NoProfile -ExecutionPolicy Bypass -Command "{0}"
-        env:
-          DATABRICKS_CLI_DO_NOT_EXECUTE_NEWER_VERSION: 1
         run: |
           $TARGET      = "${{ inputs.environment || 'sandbox' }}"
           $BUNDLE_NAME = "${{ inputs.bundle_name || 'drs' }}"  # Default to DRS bundle for sandbox
           Write-Host "Deploying to target: $TARGET"
 
+          # Use the new Databricks CLI from temp directory
+          $newCLI = "$env:TEMP\databricks_cli\databricks.exe"
+          
           if ($BUNDLE_NAME) {
             $bundlePath = Join-Path "bundles" $BUNDLE_NAME
             if (Test-Path (Join-Path $bundlePath "databricks.yml")) {
               Write-Host ("Deploying bundle: " + $BUNDLE_NAME + " to target: " + $TARGET)
               Push-Location $bundlePath
-              databricks bundle deploy --target $TARGET --profile $TARGET
+              & $newCLI bundle deploy --target $TARGET --profile $TARGET
               Pop-Location
             } else {
               Write-Host "❌ Bundle not found: $BUNDLE_NAME"
