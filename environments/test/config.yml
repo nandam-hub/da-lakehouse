@@ -2,7 +2,7 @@
 environment:
   name: test
   lh_environment: test
-  aws_environment: dev
+  aws_environment: test
 
 databricks:
   host: ${SECRET:databricks-test-credentials:host}

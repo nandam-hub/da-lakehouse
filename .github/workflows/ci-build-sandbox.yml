@@ -70,6 +70,18 @@ jobs:
           aws-region: ${{ steps.load-region.outputs.aws-region }}
           audience: sts.amazonaws.com
 
+      - name: Configure Proxy Connection
+        run: |
+          echo "Configuring proxy connection via sandbox-ubuntu (18.222.51.168)..."
+          # Use sandbox-ubuntu EC2 instance as HTTP proxy
+          PROXY_HOST="18.222.51.168"
+          PROXY_PORT="3128"
+          
+          echo "Using HTTP Proxy: $PROXY_HOST:$PROXY_PORT"
+          echo "HTTP_PROXY=http://$PROXY_HOST:$PROXY_PORT" >> $GITHUB_ENV
+          echo "HTTPS_PROXY=http://$PROXY_HOST:$PROXY_PORT" >> $GITHUB_ENV
+          echo "Proxy configured successfully"
+
       - name: Get Databricks credentials from AWS Secrets Manager
         id: get-secrets
         shell: pwsh
@@ -101,7 +113,7 @@ jobs:
           # Extract the fields (match the exact JSON property names)
           $SERVICE_PRINCIPAL = $secretObj.service_principal_sandbox
           $CLIENT_SECRET     = $secretObj.client_secret
-          $DATABRICKS_HOST   = $secretObj."databricks_host_sandbox"
+          $DATABRICKS_HOST   = if ($env:DATABRICKS_HOST_OVERRIDE) { $env:DATABRICKS_HOST_OVERRIDE } else { $secretObj."databricks_host_sandbox" }
 
           Write-Host "=== Extracted Values ==="
           Write-Host "Service principal: $SERVICE_PRINCIPAL"
