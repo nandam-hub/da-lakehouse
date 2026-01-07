@@ -204,7 +204,21 @@ jobs:
           }
 
       - name: Setup Databricks CLI
-        uses: databricks/setup-cli@v0.281.0
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -Command "{0}"
+        run: |
+          # Download and install Databricks CLI
+          $url = "https://github.com/databricks/cli/releases/latest/download/databricks_cli_windows_amd64.zip"
+          $zip = "$env:TEMP\databricks_cli.zip"
+          $extractPath = "$env:TEMP\databricks_cli"
+
+          Invoke-WebRequest -Uri $url -OutFile $zip
+          Expand-Archive -Path $zip -DestinationPath $extractPath -Force
+
+          # Add to PATH for this session
+          $env:PATH = "$extractPath;$env:PATH"
+
+          # Verify installation
+          & "$extractPath\databricks.exe" version
 
       - name: Deploy bundles
         shell: powershell -ExecutionPolicy Bypass
