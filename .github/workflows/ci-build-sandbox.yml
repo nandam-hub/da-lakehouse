@@ -225,28 +225,18 @@ jobs:
         shell: powershell -NoProfile -ExecutionPolicy Bypass -Command "{0}"
         run: |
           $TARGET      = "${{ inputs.environment || 'sandbox' }}"
-          $BUNDLE_NAME = "${{ inputs.bundle_name || '' }}"
+          $BUNDLE_NAME = "${{ inputs.bundle_name || 'drs' }}"  # Default to DRS bundle for sandbox
           Write-Host "Deploying to target: $TARGET"
 
           if ($BUNDLE_NAME) {
             $bundlePath = Join-Path "bundles" $BUNDLE_NAME
             if (Test-Path (Join-Path $bundlePath "databricks.yml")) {
+              Write-Host ("Deploying bundle: " + $BUNDLE_NAME + " to target: " + $TARGET)
               Push-Location $bundlePath
               databricks bundle deploy --target $TARGET --profile $TARGET
               Pop-Location
             } else {
               Write-Host "❌ Bundle not found: $BUNDLE_NAME"
               exit 1
-            }
-          } else {
-            Write-Host "Deploying all bundles"
-            Get-ChildItem -Directory "bundles" | ForEach-Object {
-              $cfg = Join-Path $_.FullName "databricks.yml"
-              if (Test-Path $cfg) {
-                Write-Host ("Deploying bundle: " + $_.Name + " to target: " + $TARGET)
-                Push-Location $_.FullName
-                databricks bundle deploy --target $TARGET --profile $TARGET
-                Pop-Location
-              }
             }
           }
