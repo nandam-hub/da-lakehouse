@@ -36,16 +36,16 @@ variables:
 
   databricks_client_secret:
     description: "Databricks OAuth client secret"
-    default: "dose9b72dea76c379efe05c765be4c9bde18"  # pragma: allowlist secret
+    default: "dose9b72dea76c379efe05c765be4c9bde18" # pragma: allowlist secret
 
   amic_environment:
-    description: "AMIC environment name for schema suffix (e.g., deva, testb, qas, prod)"
-    default: "dev"
+    description: "AMIC environment name for schema suffix (e.g., sandbox, dev, test, qas, prod)"
+    default: "sandbox"
 
   aws_environment:
     description: "AWS environment where S3 is located (e.g., dev or prod)"
-    default: "dev"
+    default: "sandbox"
 
   lh_environment:
     description: "Lakehouse environment name for catalog prefix (e.g., dev, test, prod)"
-    default: "dev"
+    default: "sandbox"
