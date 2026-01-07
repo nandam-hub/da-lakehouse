@@ -74,8 +74,8 @@ jobs:
         run: |
           # Install PowerShell-Yaml if missing
           if (-not (Get-Module -ListAvailable -Name powershell-yaml)) {
-            Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
             Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Scope CurrentUser
+            Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
             Install-Module -Name powershell-yaml -Force -Scope CurrentUser
           }
 
