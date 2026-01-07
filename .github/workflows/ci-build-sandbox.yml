@@ -81,7 +81,15 @@ jobs:
 
           $yamlPath = ".github/parameters.yml"
           if (-not (Test-Path $yamlPath)) {
-          "AWS_REGION=$AWS_REGION" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8            Write-Host "❌ parameters.yml not found at $yamlPath"
+            Write-Host "❌ parameters.yml not found at $yamlPath"
+            $AWS_REGION = "us-east-1"  # Default region
+          } else {
+            $yaml = Get-Content $yamlPath -Raw
+            $obj = ConvertFrom-Yaml -Yaml $yaml
+            $AWS_REGION = $obj.parameters.environment_variables.AWS_REGION
+          }
+          
+          "AWS_REGION=$AWS_REGION" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           "aws-region=$AWS_REGION" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
       - name: Configure AWS Credentials (OIDC)
@@ -227,14 +235,7 @@ jobs:
                 Pop-Location
               }
             }
-          }
-            exit 1
-          }
-
-          $yaml = Get-Content $yamlPath -Raw
-          $obj  = ConvertFrom-Yaml -Yaml $yaml
-          $AWS_REGION = $obj.parameters.environment_variables.AWS_REGION
-          if (-not $AWS_REGION) { Write-Host "❌ AWS_REGION not found in parameters.yml"; exit 1 }
+          }f (-not $AWS_REGION) { Write-Host "❌ AWS_REGION not found in parameters.yml"; exit 1 }
 
           Write-Host "AWS_REGION = $AWS_REGION"
           # Export to env and outputs
