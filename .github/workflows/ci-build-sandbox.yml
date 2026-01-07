@@ -1,4 +1,3 @@
-
 name: CI-Build Sandbox
 
 on:
@@ -16,7 +15,7 @@ on:
         default: ""
   push:
     branches:
-      - '**'
+      - "**"
   workflow_dispatch:
     inputs:
       environment:
@@ -37,7 +36,7 @@ jobs:
     uses: ./.github/workflows/build-template.yml
     with:
       environment: ${{ inputs.environment || 'sandbox' }}
-      image_tag: 'latest'
+      image_tag: "latest"
     secrets: inherit
     permissions:
       contents: read
@@ -45,7 +44,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: self-hosted   # Windows self-hosted runner
+    runs-on: self-hosted # Windows self-hosted runner
     permissions:
       contents: read
       id-token: write
@@ -88,7 +87,7 @@ jobs:
             $obj = ConvertFrom-Yaml -Yaml $yaml
             $AWS_REGION = $obj.parameters.environment_variables.AWS_REGION
           }
-          
+
           "AWS_REGION=$AWS_REGION" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           "aws-region=$AWS_REGION" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
@@ -103,7 +102,7 @@ jobs:
         id: get-secrets
         shell: powershell -NoProfile -ExecutionPolicy Bypass -Command "{0}"
         run: |
-          $secretName = "assetbundle-sandbox-credentials"  # fixed typo
+          $secretName = "assetbundle-sandbox-credenttials"
           Write-Host "Fetching secret from AWS Secrets Manager: $secretName"
           try {
             $SECRET_SP = aws secretsmanager get-secret-value `
