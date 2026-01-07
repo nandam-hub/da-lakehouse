@@ -197,7 +197,7 @@ jobs:
           }
 
       - name: Setup Databricks CLI
-        uses: databricks/setup-cli@v2
+        uses: databricks/setup-cli@v0.281.0
 
       - name: Deploy bundles
         shell: powershell -ExecutionPolicy Bypass
