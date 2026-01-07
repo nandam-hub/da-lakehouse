@@ -14,7 +14,7 @@ include:
 
 # Used in Each Target
 workspace_config: &workspace_config
-  host: ${DATABRICKS_HOST}
+  # host will be set via DATABRICKS_HOST environment variable
   # Where `databricks bundle deploy` will place the bundle contents
   root_path: /Workspace/deployment/${var.lh_environment}/${bundle.name}/${bundle.target}/
 
