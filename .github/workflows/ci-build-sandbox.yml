@@ -62,7 +62,7 @@ jobs:
       #   run: pip install databricks-cli
 
       - name: Configure Databricks Authentication
-        shell: powershell
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -Command "{0}"
         run: |
           # Set environment variables for Databricks CLI
           Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
