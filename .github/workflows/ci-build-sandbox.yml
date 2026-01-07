@@ -45,7 +45,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: sandbox-runner
     permissions:
       contents: read
       id-token: write
@@ -70,25 +70,13 @@ jobs:
           aws-region: ${{ steps.load-region.outputs.aws-region }}
           audience: sts.amazonaws.com
 
-      - name: Configure Proxy Connection
-        run: |
-          echo "Configuring proxy connection via sandbox-ubuntu (18.222.51.168)..."
-          # Use sandbox-ubuntu EC2 instance as HTTP proxy
-          PROXY_HOST="18.222.51.168"
-          PROXY_PORT="3128"
-          
-          echo "Using HTTP Proxy: $PROXY_HOST:$PROXY_PORT"
-          echo "HTTP_PROXY=http://$PROXY_HOST:$PROXY_PORT" >> $GITHUB_ENV
-          echo "HTTPS_PROXY=http://$PROXY_HOST:$PROXY_PORT" >> $GITHUB_ENV
-          echo "Proxy configured successfully"
-
       - name: Get Databricks credentials from AWS Secrets Manager
         id: get-secrets
         shell: pwsh
         run: |
           # Get secret from AWS Secrets Manager
           Write-Host "Fetching secret from AWS Secrets Manager..."
-          $SECRET_SP = $(aws secretsmanager get-secret-value --secret-id assetbundle-sandbox-credenttials --query 'SecretString' --output text)
+          $SECRET_SP = $(aws secretsmanager get-secret-value --secret-id assetbundle-sandbox-credentials --query 'SecretString' --output text)
 
           if (-not $SECRET_SP) {
               Write-Host "ERROR: Failed to retrieve secret from AWS Secrets Manager"
