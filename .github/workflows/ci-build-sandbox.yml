@@ -55,7 +55,7 @@ jobs:
 
       # Install AWS CLI v2 (if missing) on Windows
       - name: Install AWS CLI v2 (Windows)
-        shell: powershell -ExecutionPolicy Bypass
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -Command "{0}"
         run: |
           if (-not (Get-Command aws -ErrorAction SilentlyContinue)) {
             Write-Host "Installing AWS CLI v2..."
@@ -70,7 +70,7 @@ jobs:
       # Load AWS Region from .github/parameters.yml using PowerShell-Yaml
       - name: Load AWS Region
         id: load-region
-        shell: powershell -ExecutionPolicy Bypass
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -Command "{0}"
         run: |
           # Install PowerShell-Yaml if missing
           if (-not (Get-Module -ListAvailable -Name powershell-yaml)) {
@@ -93,7 +93,7 @@ jobs:
 
       - name: Get Databricks credentials from AWS Secrets Manager
         id: get-secrets
-        shell: powershell -ExecutionPolicy Bypass
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -Command "{0}"
         run: |
           $secretName = "assetbundle-sandbox-credentials"  # fixed typo
           Write-Host "Fetching secret from AWS Secrets Manager: $secretName"
@@ -178,7 +178,7 @@ jobs:
           }
 
       - name: Verify Databricks Profile
-        shell: powershell -ExecutionPolicy Bypass Command "{0}"
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -Command "{0}"
         run: |
           $configPath = Join-Path $home ".databrickscfg"
           Write-Host "=== Verifying Databricks Profile ==="
