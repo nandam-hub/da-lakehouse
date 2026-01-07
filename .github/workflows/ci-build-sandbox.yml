@@ -175,6 +175,9 @@ jobs:
           Set-Content -LiteralPath $configPath -Value $finalContent -Encoding ASCII
           Write-Host "Databricks config written to: $configPath"
 
+          # Set environment variable for bundle deployment
+          "DATABRICKS_HOST=$DATABRICKS_HOST" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
           $configContent = Get-Content $configPath -Raw
           if ($configContent -match ("\[" + [regex]::Escape($profileName) + "\]")) {
             Write-Host "✅ SUCCESS: '$profileName' profile created successfully"

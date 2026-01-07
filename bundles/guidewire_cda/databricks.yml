@@ -14,7 +14,7 @@ include:
 
 # Used in Each Target
 workspace_config: &workspace_config
-  host: https://amic-enterprise-workspace.cloud.databricks.com/
+  host: ${DATABRICKS_HOST}
   # Where `databricks bundle deploy` will place the bundle contents
   root_path: /Workspace/deployment/${var.lh_environment}/${bundle.name}/${bundle.target}/
 
@@ -97,7 +97,7 @@ prod_permissions: &prod_permissions
 # Variables, by lh-environment
 sandbox_variable_block: &sandbox_variable_block
   service_principal_object_owner: ${var.service_principals.sandbox}
-  aws_environment: dev
+  aws_environment: sandbox
   lh_environment: sandbox
 
 dev_variable_block: &dev_variable_block
@@ -107,14 +107,8 @@ dev_variable_block: &dev_variable_block
 
 test_variable_block: &test_variable_block
   service_principal_object_owner: ${var.service_principals.test}
-  aws_environment: dev
+  aws_environment: test
   lh_environment: test
-
-prod_variable_block: &prod_variable_block
-  service_principal_object_owner: ${var.service_principals.prod}
-  aws_environment: prod
-  lh_environment: prod
-
 #############################################################################
 ### Databricks Asset Bundle Deployment Targets
 #############################################################################
@@ -128,50 +122,18 @@ targets:
       <<: *sandbox_variable_block
       amic_environment: sandbox
 
-  deva:
+  dev:
     mode: production
     workspace: *workspace_config
     permissions: *dev_permissions
     variables:
       <<: *dev_variable_block
-      amic_environment: deva
+      amic_environment: dev
 
-  devb:
+  test:
     mode: production
     workspace: *workspace_config
     permissions: *dev_permissions
     variables:
       <<: *dev_variable_block
-      amic_environment: devb
-
-  testa:
-    mode: production
-    workspace: *workspace_config
-    permissions: *test_permissions
-    variables:
-      <<: *test_variable_block
-      amic_environment: testa
-
-  testb:
-    mode: production
-    workspace: *workspace_config
-    permissions: *test_permissions
-    variables:
-      <<: *test_variable_block
-      amic_environment: testb
-
-  qas:
-    mode: production
-    workspace: *workspace_config
-    permissions: *qas_permissions
-    variables:
-      <<: *test_variable_block
-      amic_environment: qas
-
-  prod:
-    mode: production
-    workspace: *workspace_config
-    permissions: *prod_permissions
-    variables:
-      <<: *prod_variable_block
-      amic_environment: prod
+      amic_environment: test
