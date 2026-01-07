@@ -1,3 +1,4 @@
+
 name: CI-Build Sandbox
 
 on:
@@ -13,7 +14,6 @@ on:
         required: false
         type: string
         default: ""
-
   push:
     branches:
       - '**'
@@ -45,25 +45,46 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: self-hosted
+    runs-on: self-hosted   # Windows self-hosted runner
     permissions:
       contents: read
       id-token: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # - name: Install yq
-      #   run: sudo snap install yq
+      # Install AWS CLI v2 (if missing) on Windows
+      - name: Install AWS CLI v2 (Windows)
+        shell: powershell -ExecutionPolicy Bypass
+        run: |
+          if (-not (Get-Command aws -ErrorAction SilentlyContinue)) {
+            Write-Host "Installing AWS CLI v2..."
+            $pkg = "$env:USERPROFILE\Downloads\AWSCLIV2.msi"
+            Invoke-WebRequest -Uri "https://awscli.amazonaws.com/AWSCLIV2.msi" -OutFile $pkg
+            Start-Process msiexec.exe -Wait -ArgumentList "/i `"$pkg`" /qn"
+          } else {
+            Write-Host "AWS CLI already installed: $(aws --version)"
+          }
+          aws --version
 
+      # Load AWS Region from .github/parameters.yml using PowerShell-Yaml
       - name: Load AWS Region
         id: load-region
+        shell: powershell -ExecutionPolicy Bypass
         run: |
-          AWS_REGION=$(yq eval '.parameters.environment_variables.AWS_REGION' .github/parameters.yml)
-          echo "AWS_REGION=$AWS_REGION" >> $GITHUB_ENV
-          echo "aws-region=$AWS_REGION" >> $GITHUB_OUTPUT
+          # Install PowerShell-Yaml if missing
+          if (-not (Get-Module -ListAvailable -Name powershell-yaml)) {
+            Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
+            Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Scope CurrentUser
+            Install-Module -Name powershell-yaml -Force -Scope CurrentUser
+          }
 
-      - name: Configure AWS Credentials
+          $yamlPath = ".github/parameters.yml"
+          if (-not (Test-Path $yamlPath)) {
+          "AWS_REGION=$AWS_REGION" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8            Write-Host "❌ parameters.yml not found at $yamlPath"
+          "aws-region=$AWS_REGION" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
@@ -72,152 +93,148 @@ jobs:
 
       - name: Get Databricks credentials from AWS Secrets Manager
         id: get-secrets
-        shell: pwsh
+        shell: powershell -ExecutionPolicy Bypass
         run: |
-          # Get secret from AWS Secrets Manager
-          Write-Host "Fetching secret from AWS Secrets Manager..."
-          $SECRET_SP = $(aws secretsmanager get-secret-value --secret-id assetbundle-sandbox-credenttials --query 'SecretString' --output text)
+          $secretName = "assetbundle-sandbox-credentials"  # fixed typo
+          Write-Host "Fetching secret from AWS Secrets Manager: $secretName"
+          try {
+            $SECRET_SP = aws secretsmanager get-secret-value `
+              --secret-id $secretName `
+              --query 'SecretString' `
+              --output text `
+              --region "${{ steps.load-region.outputs.aws-region }}"
+          } catch {
+            Write-Host "❌ Error retrieving secret: $($_.Exception.Message)"
+            exit 1
+          }
 
           if (-not $SECRET_SP) {
-              Write-Host "ERROR: Failed to retrieve secret from AWS Secrets Manager"
-              exit 1
+            Write-Host "❌ Failed to retrieve secret from AWS Secrets Manager"
+            exit 1
           }
 
           Write-Host "Secret retrieved successfully"
-          Write-Host "Raw secret (first 50 chars): $($SECRET_SP.Substring(0, [Math]::Min(50, $SECRET_SP.Length)))..."
+          Write-Host ("Raw secret (first 50 chars): " + $SECRET_SP.Substring(0, [Math]::Min(50, $SECRET_SP.Length)) + "...")
 
-          $ENVIRONMENT = "${{inputs.environment || 'sandbox'}}"
+          $ENVIRONMENT = "${{ inputs.environment || 'sandbox' }}"
           Write-Host "Target environment: $ENVIRONMENT"
 
           try {
-              $secretObj = $SECRET_SP | ConvertFrom-Json
-              Write-Host "Secret parsed successfully"
+            $secretObj = $SECRET_SP | ConvertFrom-Json
+            Write-Host "Secret parsed successfully"
           } catch {
-              Write-Host "ERROR: Failed to parse secret JSON: $_"
-              Write-Host "Raw secret content: $SECRET_SP"
-              exit 1
+            Write-Host "❌ Failed to parse secret JSON: $($_.Exception.Message)"
+            Write-Host "Raw secret content: $SECRET_SP"
+            exit 1
           }
 
-          # Extract the fields (match the exact JSON property names)
+          # Extract fields
           $SERVICE_PRINCIPAL = $secretObj.service_principal_sandbox
           $CLIENT_SECRET     = $secretObj.client_secret
-          $DATABRICKS_HOST   = if ($env:DATABRICKS_HOST_OVERRIDE) { $env:DATABRICKS_HOST_OVERRIDE } else { $secretObj."databricks_host_sandbox" }
+          $DATABRICKS_HOST   = if ($env:DATABRICKS_HOST_OVERRIDE) { $env:DATABRICKS_HOST_OVERRIDE } else { $secretObj.databricks_host_sandbox }
 
           Write-Host "=== Extracted Values ==="
           Write-Host "Service principal: $SERVICE_PRINCIPAL"
           Write-Host "Host: $DATABRICKS_HOST"
-          Write-Host "Client secret length: $($CLIENT_SECRET.Length)"
+          Write-Host ("Client secret length: " + $CLIENT_SECRET.Length)
 
-          # Validate required fields
           if (-not $SERVICE_PRINCIPAL -or -not $CLIENT_SECRET -or -not $DATABRICKS_HOST) {
-              Write-Host "ERROR: Missing required fields in secret"
-              Write-Host "Available keys in secret: $($secretObj.PSObject.Properties.Name -join ', ')"
-              exit 1
+            Write-Host "❌ Missing required fields in secret"
+            Write-Host ("Available keys in secret: " + ($secretObj.PSObject.Properties.Name -join ', '))
+            exit 1
           }
 
           $configPath = Join-Path $home ".databrickscfg"
-
-          # Read existing config if it exists
-          $existingContent = ""
-          if (Test-Path $configPath) {
-              $existingContent = Get-Content $configPath -Raw
-              Write-Host "Existing config found"
-          }
+          $existingContent = if (Test-Path $configPath) { Get-Content $configPath -Raw } else { "" }
 
           # Prepare new profile content
-          $DATABRICKS_CONFIG_PROFILE = "${{inputs.environment || 'sandbox'}}"
-          $profileName   = $DATABRICKS_CONFIG_PROFILE
-          $host_url          = $DATABRICKS_HOST
-          $clientId      = $SERVICE_PRINCIPAL
-          $clientSecret  = $CLIENT_SECRET
-
-          # Create new profile section
-          $oauth = "oauth-m2m"
+          $profileName  = "${{ inputs.environment || 'sandbox' }}"
+          $oauth        = "oauth-m2m"
           $newProfileLines = @(
-              ""
-              "[$profileName]"
-              "host = $host_url"
-              "auth_type = $oauth"
-              "client_id = $clientId"
-              "client_secret = $clientSecret"
+            ""
+            "[$profileName]"
+            "host = $DATABRICKS_HOST"
+            "auth_type = $oauth"
+            "client_id = $SERVICE_PRINCIPAL"
+            "client_secret = $CLIENT_SECRET"
           )
-
           $newProfileContent = ($newProfileLines -join [Environment]::NewLine)
 
-          # Remove existing profile if it exists, then append new one
+          # Remove existing profile block, then append new one
           $pattern = "\[" + [regex]::Escape($profileName) + "\][\s\S]*?(?=\n\[|$)"
           $updatedContent = $existingContent -replace $pattern, ""
           $finalContent = $updatedContent.TrimEnd() + $newProfileContent
 
           Set-Content -LiteralPath $configPath -Value $finalContent -Encoding ASCII
-
           Write-Host "Databricks config written to: $configPath"
-          Write-Host "=== Final Config Content ==="
-          if (Test-Path $configPath) {
-              Get-Content $configPath
-              Write-Host "=== End Config Content ==="
 
-              # Verify sandbox profile exists
-              $configContent = Get-Content $configPath -Raw
-              if ($configContent -match "\[sandbox\]") {
-                  Write-Host "✅ SUCCESS: Sandbox profile created successfully"
-              } else {
-                  Write-Host "❌ ERROR: Sandbox profile NOT found in config file"
-                  Write-Host "Config file size: $((Get-Item $configPath).Length) bytes"
-                  exit 1
-              }
+          $configContent = Get-Content $configPath -Raw
+          if ($configContent -match ("\[" + [regex]::Escape($profileName) + "\]")) {
+            Write-Host "✅ SUCCESS: '$profileName' profile created successfully"
           } else {
-              Write-Host "❌ ERROR: Config file was not created at $configPath"
-              exit 1
+            Write-Host "❌ ERROR: '$profileName' profile NOT found in config file"
+            Write-Host ("Config file size: " + (Get-Item $configPath).Length + " bytes")
+            exit 1
           }
 
       - name: Verify Databricks Profile
+        shell: powershell -ExecutionPolicy Bypass
         run: |
-          echo "=== Verifying Databricks Profile ==="
-          if [ -f "$HOME/.databrickscfg" ]; then
-            echo "Config file exists"
-            echo "Config file content:"
-            cat "$HOME/.databrickscfg"
-            echo "=== End Config ==="
-
-            if grep -q "\[sandbox\]" "$HOME/.databrickscfg"; then
-              echo "✅ Sandbox profile found"
-            else
-              echo "❌ Sandbox profile NOT found"
+          $configPath = Join-Path $home ".databrickscfg"
+          Write-Host "=== Verifying Databricks Profile ==="
+          if (Test-Path $configPath) {
+            Write-Host "Config file exists: $configPath"
+            Get-Content $configPath
+            if ((Get-Content $configPath -Raw) -match "\[sandbox\]") {
+              Write-Host "✅ Sandbox profile found"
+            } else {
+              Write-Host "❌ Sandbox profile NOT found"
               exit 1
-            fi
-          else
-            echo "❌ Config file does not exist"
+            }
+          } else {
+            Write-Host "❌ Config file does not exist at $configPath"
             exit 1
-          fi
+          }
 
       - name: Setup Databricks CLI
-        uses: databricks/setup-cli@main
+        uses: databricks/setup-cli@v2
 
       - name: Deploy bundles
+        shell: powershell -ExecutionPolicy Bypass
         run: |
-          TARGET="${{ inputs.environment || 'sandbox' }}"
-          BUNDLE_NAME="${{ inputs.bundle_name || '' }}"
-          echo "Deploying to target: $TARGET"
+          $TARGET      = "${{ inputs.environment || 'sandbox' }}"
+          $BUNDLE_NAME = "${{ inputs.bundle_name || '' }}"
+          Write-Host "Deploying to target: $TARGET"
 
-          if [ -n "$BUNDLE_NAME" ]; then
-            echo "Deploying specific bundle: $BUNDLE_NAME"
-            if [ -f "bundles/$BUNDLE_NAME/databricks.yml" ]; then
-              cd "bundles/$BUNDLE_NAME"
-              databricks bundle deploy --target "$TARGET" --profile "$TARGET"
-              cd - > /dev/null
-            else
-              echo "❌ Bundle not found: $BUNDLE_NAME"
+          if ($BUNDLE_NAME) {
+            $bundlePath = Join-Path "bundles" $BUNDLE_NAME
+            if (Test-Path (Join-Path $bundlePath "databricks.yml")) {
+              Push-Location $bundlePath
+              databricks bundle deploy --target $TARGET --profile $TARGET
+              Pop-Location
+            } else {
+              Write-Host "❌ Bundle not found: $BUNDLE_NAME"
               exit 1
-            fi
-          else
-            echo "Deploying all bundles"
-            for bundle_dir in bundles/*/; do
-              if [ -f "$bundle_dir/databricks.yml" ]; then
-                echo "Deploying bundle: $(basename $bundle_dir) to target: $TARGET"
-                cd "$bundle_dir"
-                databricks bundle deploy --target "$TARGET" --profile "$TARGET"
-                cd - > /dev/null
-              fi
-            done
-          fi
+            }
+          } else {
+            Write-Host "Deploying all bundles"
+            Get-ChildItem -Directory "bundles" | ForEach-Object {
+              $cfg = Join-Path $_.FullName "databricks.yml"
+              if (Test-Path $cfg) {
+                Write-Host ("Deploying bundle: " + $_.Name + " to target: " + $TARGET)
+                Push-Location $_.FullName
+                databricks bundle deploy --target $TARGET --profile $TARGET
+                Pop-Location
+              }
+            }
+          }
+            exit 1
+          }
+
+          $yaml = Get-Content $yamlPath -Raw
+          $obj  = ConvertFrom-Yaml -Yaml $yaml
+          $AWS_REGION = $obj.parameters.environment_variables.AWS_REGION
+          if (-not $AWS_REGION) { Write-Host "❌ AWS_REGION not found in parameters.yml"; exit 1 }
+
+          Write-Host "AWS_REGION = $AWS_REGION"
+          # Export to env and outputs
