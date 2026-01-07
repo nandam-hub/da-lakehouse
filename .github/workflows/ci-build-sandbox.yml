@@ -223,6 +223,8 @@ jobs:
 
       - name: Deploy bundles
         shell: powershell -NoProfile -ExecutionPolicy Bypass -Command "{0}"
+        env:
+          DATABRICKS_CLI_DO_NOT_EXECUTE_NEWER_VERSION: 1
         run: |
           $TARGET      = "${{ inputs.environment || 'sandbox' }}"
           $BUNDLE_NAME = "${{ inputs.bundle_name || 'drs' }}"  # Default to DRS bundle for sandbox
