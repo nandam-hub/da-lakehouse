@@ -2,7 +2,7 @@
 environment:
   name: sandbox
   lh_environment: sandbox
-  aws_environment: dev
+  aws_environment: sandbox
 
 databricks:
   host: ${SECRET:databricks-sandbox-credentials:host}
