@@ -206,39 +206,37 @@ jobs:
             exit 1
           }
 
-      - name: Setup Databricks CLI
-        shell: powershell -NoProfile -ExecutionPolicy Bypass -Command "{0}"
+
+      - name: Remove legacy databricks-cli (Python) safely
+        shell: 'powershell -NoProfile -ExecutionPolicy Bypass -Command "{0}"'
         run: |
-          # Remove old databricks-cli if it exists
-          pip uninstall databricks-cli -y 2>$null
-          
-          # Install the new Databricks CLI
-          $url = "https://github.com/databricks/cli/releases/latest/download/databricks_cli_windows_amd64.zip"
-          $zip = "$env:TEMP\databricks_cli.zip"
-          $extractPath = "$env:TEMP\databricks_cli"
-          
+         # Be tolerant to non-terminating errors/warnings
+            $ErrorActionPreference = 'Continue'
+
+          if (Get-Command python -ErrorAction SilentlyContinue) {
+           Write-Host "Checking for legacy Python databricks-cli..."
           try {
-            # Get the latest release info
-            $response = Invoke-RestMethod -Uri "https://api.github.com/repos/databricks/cli/releases/latest"
-            $asset = $response.assets | Where-Object { $_.name -like "*windows*amd64*" }
-            
-            if ($asset) {
-              Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $zip
-              Expand-Archive -Path $zip -DestinationPath $extractPath -Force
-              
-              # Add to PATH for this session
-              $env:PATH = "$extractPath;$env:PATH"
-              
-              # Verify installation
-              & "$extractPath\databricks.exe" version
-              Write-Host "✅ New Databricks CLI installed successfully"
-            } else {
-              throw "Windows asset not found"
-            }
-          } catch {
-            Write-Host "❌ Failed to install new Databricks CLI: $($_.Exception.Message)"
-            exit 1
-          }
+         $pkgs = python -m pip list --format=json 2>$null | ConvertFrom-Json
+         } catch {
+         Write-Host "pip list produced warnings; continuing."
+         $pkgs = @()
+         }
+
+         if ($pkgs | Where-Object { $_.name -eq 'databricks-cli' }) {
+          Write-Host "Uninstalling legacy databricks-cli..."
+          python -m pip uninstall databricks-cli -y 2>$null
+         if ($LASTEXITCODE -ne 0) {
+          Write-Host "pip uninstall exit code: $LASTEXITCODE (non-fatal)."
+         } else {
+          Write-Host "Successfully uninstalled legacy databricks-cli."
+         }
+         } else {
+         Write-Host "Legacy databricks-cli not found."
+         }
+         } else {
+          Write-Host "Python not found; skipping pip uninstall."
+         }
+
 
       - name: Deploy bundles
         shell: powershell -NoProfile -ExecutionPolicy Bypass -Command "{0}"
@@ -249,7 +247,7 @@ jobs:
 
           # Use the new Databricks CLI from temp directory
           $newCLI = "$env:TEMP\databricks_cli\databricks.exe"
-          
+
           if ($BUNDLE_NAME) {
             $bundlePath = Join-Path "bundles" $BUNDLE_NAME
             if (Test-Path (Join-Path $bundlePath "databricks.yml")) {
