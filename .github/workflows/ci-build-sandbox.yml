@@ -58,8 +58,8 @@ jobs:
       #   with:
       #     python-version: '3.x'
 
-      - name: Install Databricks CLI
-        run: pip install databricks-cli
+      # - name: Install Databricks CLI
+      #   run: pip install databricks-cli
 
       - name: Configure Databricks Authentication
         run: |
