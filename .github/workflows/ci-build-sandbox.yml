@@ -52,6 +52,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Databricks CLI
+        run: pip install databricks-cli
+
+      - name: Configure Databricks Authentication
+        run: |
+          # Set environment variables for Databricks CLI
+          echo "DATABRICKS_HOST=${{ secrets.DATABRICKS_HOST }}" >> $env:GITHUB_ENV
+          echo "DATABRICKS_TOKEN=${{ secrets.DATABRICKS_TOKEN }}" >> $env:GITHUB_ENV
+
+
       # Install AWS CLI v2 (if missing) on Windows
       - name: Install AWS CLI v2 (Windows)
         shell: powershell -NoProfile -ExecutionPolicy Bypass -Command "{0}"
@@ -245,18 +261,17 @@ jobs:
           $BUNDLE_NAME = "${{ inputs.bundle_name || 'drs' }}"  # Default to DRS bundle for sandbox
           Write-Host "Deploying to target: $TARGET"
 
-          # Use the new Databricks CLI from temp directory
-          $newCLI = "$env:TEMP\databricks_cli\databricks.exe"
 
           if ($BUNDLE_NAME) {
-            $bundlePath = Join-Path "bundles" $BUNDLE_NAME
-            if (Test-Path (Join-Path $bundlePath "databricks.yml")) {
-              Write-Host ("Deploying bundle: " + $BUNDLE_NAME + " to target: " + $TARGET)
-              Push-Location $bundlePath
-              & $newCLI bundle deploy --target $TARGET --profile $TARGET
-              Pop-Location
-            } else {
-              Write-Host "❌ Bundle not found: $BUNDLE_NAME"
-              exit 1
-            }
+          $bundlePath = Join-Path "bundles" $BUNDLE_NAME
+          if (Test-Path (Join-Path $bundlePath "databricks.yml")) {
+          Write-Host ("Deploying bundle: " + $BUNDLE_NAME + " to target: " + $TARGET)
+          Push-Location $bundlePath
+          databricks bundle deploy --target $TARGET --profile $TARGET
+          Pop-Location
+          } else {
+           Write-Host "❌ Bundle not found: $BUNDLE_NAME"
+          exit 1
+          }
+
           }
