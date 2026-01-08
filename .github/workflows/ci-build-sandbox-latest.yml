@@ -44,7 +44,9 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: codebuild-poc-github-runner-${{ github.run_id }}-${{ github.run_attempt }}
+    timeout-minutes: 60
+
     permissions:
       contents: read
       id-token: write
