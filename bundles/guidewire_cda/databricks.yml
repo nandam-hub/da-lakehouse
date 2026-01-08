@@ -23,7 +23,7 @@ sandbox_permissions: &sandbox_permissions
   - level: CAN_MANAGE
     group_name: LakehouseEnterpriseWorkspaceAdmin
   - level: CAN_MANAGE
-    group_name: LakehouseEnterpriseExpertDataEngineer
+    group_name: LakehouseSandboxDataEngineer
   - level: CAN_MANAGE
     user_name: ${workspace.current_user.userName}
   - level: CAN_MANAGE
@@ -38,7 +38,7 @@ dev_permissions: &dev_permissions
   - level: CAN_MANAGE
     group_name: LakehouseEnterpriseWorkspaceAdmin
   - level: CAN_MANAGE
-    group_name: LakehouseEnterpriseExpertDataEngineer
+    group_name: LakehouseSandboxDataEngineer
   - level: CAN_MANAGE
     user_name: ${workspace.current_user.userName}
   - level: CAN_MANAGE
@@ -53,7 +53,7 @@ test_permissions: &test_permissions
   - level: CAN_MANAGE
     group_name: LakehouseEnterpriseWorkspaceAdmin
   - level: CAN_MANAGE
-    group_name: LakehouseEnterpriseExpertDataEngineer
+    group_name: LakehouseSandboxDataEngineer
   - level: CAN_MANAGE
     user_name: ${workspace.current_user.userName}
   - level: CAN_MANAGE
@@ -68,7 +68,7 @@ qas_permissions: &qas_permissions
   - level: CAN_MANAGE
     group_name: LakehouseEnterpriseWorkspaceAdmin
   - level: CAN_MANAGE
-    group_name: LakehouseEnterpriseExpertDataEngineer
+    group_name: LakehouseSandboxDataEngineer
   - level: CAN_MANAGE
     user_name: ${workspace.current_user.userName}
   - level: CAN_MANAGE
@@ -83,7 +83,7 @@ prod_permissions: &prod_permissions
   - level: CAN_MANAGE
     group_name: LakehouseEnterpriseWorkspaceAdmin
   - level: CAN_MANAGE
-    group_name: LakehouseEnterpriseExpertDataEngineer
+    group_name: LakehouseSandboxDataEngineer
   - level: CAN_MANAGE
     user_name: ${workspace.current_user.userName}
   - level: CAN_MANAGE

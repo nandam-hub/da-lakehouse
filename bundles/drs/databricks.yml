@@ -8,7 +8,6 @@ include:
   - resources/*/*.yml
   #- resources/*/*/*.ipynb
 
-
 #############################################################################
 ### Reusable blocks (anchors)
 #############################################################################
@@ -22,9 +21,9 @@ workspace_config: &workspace_config
 #_permissions: &sandbox_permissions# Permissions (reusable lists). Apply these inside resource definitions.
 sand_permissions: &sandbox_permissions
   - level: CAN_MANAGE
-    group_name: LakehouseEnterpriseWorkspaceAdmin
+    group_name: LakehouseSandboxDataEngineer
   - level: CAN_MANAGE
-    group_name: LakehouseEnterpriseExpertDataEngineer
+    group_name: LakehouseSandboxDataEngineer
   - level: CAN_MANAGE
     user_name: ${workspace.current_user.userName}
   - level: CAN_MANAGE
@@ -38,7 +37,7 @@ dev_permissions: &dev_permissions
   - level: CAN_MANAGE
     group_name: LakehouseEnterpriseWorkspaceAdmin
   - level: CAN_MANAGE
-    group_name: LakehouseEnterpriseExpertDataEngineer
+    group_name: LakehouseSandboxDataEngineer
   - level: CAN_MANAGE
     user_name: ${workspace.current_user.userName}
   - level: CAN_MANAGE
@@ -52,7 +51,7 @@ test_permissions: &test_permissions
   - level: CAN_MANAGE
     group_name: LakehouseEnterpriseWorkspaceAdmin
   - level: CAN_MANAGE
-    group_name: LakehouseEnterpriseExpertDataEngineer
+    group_name: LakehouseSandboxDataEngineer
   - level: CAN_MANAGE
     user_name: ${workspace.current_user.userName}
   - level: CAN_MANAGE
