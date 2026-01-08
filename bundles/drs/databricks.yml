@@ -67,7 +67,7 @@ resources:
       name: "[${var.lh_environment}] DLT Pipeline"
       libraries:
         - notebook:
-            path: ../ingestion.ipynb
+            path: ./resources/ingestion.ipynb
       permissions: *sandbox_permissions
 
 test_variable_block: &test_variable_block
