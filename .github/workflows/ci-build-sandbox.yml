@@ -268,8 +268,8 @@ jobs:
             if (Test-Path (Join-Path $bundlePath "databricks.yml")) {
               Write-Host ("Deploying bundle: " + $BUNDLE_NAME + " to target: " + $TARGET)
               Push-Location $bundlePath
-              # Use --force-deploy to override existing deployment
-              databricks bundle deploy --target $TARGET --profile $TARGET --force-deploy
+              # Use --force-lock to override existing deployment lock
+              databricks bundle deploy --target $TARGET --profile $TARGET --force-lock
               Pop-Location
             } else {
               Write-Host "❌ Bundle not found: $BUNDLE_NAME"
