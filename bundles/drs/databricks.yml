@@ -20,8 +20,7 @@ sync:
 workspace_config: &workspace_config
   # host will be set via DATABRICKS_HOST environment variable
   # Where `databricks bundle deploy` will place the bundle contents
-  root_path: /Workspace/deployment/${var.lh_environment}/${bundle.name}/${bundle.target}_sp/
-  #root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+  root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}/
 
 #_permissions: &sandbox_permissions# Permissions (reusable lists). Apply these inside resource definitions.
 sand_permissions: &sandbox_permissions
