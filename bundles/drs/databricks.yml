@@ -64,6 +64,7 @@ resources:
       permissions: *sandbox_permissions
   pipelines:
     my_dlt_pipeline:
+      name: "[${var.lh_environment}] DLT Pipeline"
       permissions: *sandbox_permissions
 
 test_variable_block: &test_variable_block
