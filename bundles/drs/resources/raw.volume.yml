@@ -3,9 +3,9 @@ resources:
     raw_volume:
       name: ${resources.schemas.raw_schema.name}
       #catalog_name: ${var.db_environment}_raw
-      catalog_name: catalog_raw
+      catalog_name: dataandanalytics
       schema_name: ${resources.schemas.raw_schema.name}
-      #storage_location: s3://amic-lh-${var.db_environment}-raw-catalog/goldengate/webdev/drs/
+      storage_location: s3://amic-lh-sandbox-raw-catalog/goldengate/webdev/drs/
       volume_type: EXTERNAL
       comment: "External Volume where we land raw data from Golden Gate DRS."
       grants:
