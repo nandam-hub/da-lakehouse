@@ -101,18 +101,21 @@ targets:
   dev:
     mode: production
     workspace: *workspace_config
+    permissions: *dev_permissions
     variables:
       <<: *dev_variable_block
 
   sandbox:
     mode: production
     workspace: *workspace_config
+    permissions: *sandbox_permissions
     variables:
       <<: *sandbox_variable_block
 
   test:
     mode: production
     workspace: *workspace_config
+    permissions: *test_permissions
     variables:
       <<: *test_variable_block
 #############################################################################
