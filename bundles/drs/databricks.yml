@@ -58,15 +58,13 @@ sandbox_variable_block: &sandbox_variable_block
 
 resources:
   jobs:
-    demo_New_job:
-      permissions: *sandbox_permissions
+    demo_New_job: {}
   pipelines:
     my_dlt_pipeline:
       name: "[${var.lh_environment}] DLT Pipeline"
       libraries:
         - notebook:
             path: ./resources/ingestion.ipynb
-      permissions: *sandbox_permissions
 
 test_variable_block: &test_variable_block
   service_principal_object_owner: ${var.service_principals.test}
