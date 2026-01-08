@@ -69,6 +69,9 @@ jobs:
           fi
           aws --version
 
+      - name: Install PyYAML
+        run: pip install PyYAML
+
       - name: Load AWS Region
         id: load-region
         run: |
