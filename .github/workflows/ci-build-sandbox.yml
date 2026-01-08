@@ -263,17 +263,16 @@ jobs:
           $BUNDLE_NAME = "${{ inputs.bundle_name || 'drs' }}"  # Default to DRS bundle for sandbox
           Write-Host "Deploying to target: $TARGET"
 
-
           if ($BUNDLE_NAME) {
-          $bundlePath = Join-Path "bundles" $BUNDLE_NAME
-          if (Test-Path (Join-Path $bundlePath "databricks.yml")) {
-          Write-Host ("Deploying bundle: " + $BUNDLE_NAME + " to target: " + $TARGET)
-          Push-Location $bundlePath
-          databricks bundle deploy --target $TARGET --profile $TARGET
-          Pop-Location
-          } else {
-           Write-Host "❌ Bundle not found: $BUNDLE_NAME"
-          exit 1
-          }
-
+            $bundlePath = Join-Path "bundles" $BUNDLE_NAME
+            if (Test-Path (Join-Path $bundlePath "databricks.yml")) {
+              Write-Host ("Deploying bundle: " + $BUNDLE_NAME + " to target: " + $TARGET)
+              Push-Location $bundlePath
+              # Use --force-deploy to override existing deployment
+              databricks bundle deploy --target $TARGET --profile $TARGET --force-deploy
+              Pop-Location
+            } else {
+              Write-Host "❌ Bundle not found: $BUNDLE_NAME"
+              exit 1
+            }
           }
