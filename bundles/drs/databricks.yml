@@ -10,7 +10,7 @@ include:
 
 sync:
   paths:
-    - ../../../../src/notebooks/*.ipynb
+    - ../../src/notebooks/*.ipynb
 
 #############################################################################
 ### Reusable blocks (anchors)
