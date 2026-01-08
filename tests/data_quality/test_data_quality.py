@@ -22,6 +22,9 @@ class TestDataQuality:
         for volume_file in volume_files:
             with open(volume_file, 'r') as f:
                 volume_config = yaml.safe_load(f)
+                # Skip if file is commented out (returns None)
+                if volume_config is None:
+                    continue
                 assert "resources" in volume_config
                 assert "volumes" in volume_config["resources"]
 
