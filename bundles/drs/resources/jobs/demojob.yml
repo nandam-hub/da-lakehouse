@@ -5,7 +5,7 @@ resources:
       tasks:
         - task_key: ingestion
           notebook_task:
-            notebook_path: ./ingestion.ipynb
+            notebook_path: ../ingestion.ipynb
             source: WORKSPACE
       schedule:
         quartz_cron_expression: 11 17 09 * * ?
