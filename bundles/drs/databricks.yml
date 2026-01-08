@@ -20,7 +20,7 @@ workspace_config: &workspace_config
 
 #_permissions: &sandbox_permissions# Permissions (reusable lists). Apply these inside resource definitions.
 sand_permissions: &sandbox_permissions
-  - level: IS_OWNER
+  - level: CAN_MANAGE
     service_principal_name: ${var.service_principals.sandbox}
   - level: CAN_MANAGE
     group_name: LakehouseSandboxDataEngineer
