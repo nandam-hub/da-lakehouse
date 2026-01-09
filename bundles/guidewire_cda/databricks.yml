@@ -16,23 +16,16 @@ include:
 workspace_config: &workspace_config
   # host will be set via DATABRICKS_HOST environment variable
   # Where `databricks bundle deploy` will place the bundle contents
-  root_path: /Workspace/deployment/${var.lh_environment}/${bundle.name}/${bundle.target}/
+  root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}/
 
 # Permissions, by lh-environment
 sandbox_permissions: &sandbox_permissions
   - level: CAN_MANAGE
-    group_name: LakehouseEnterpriseWorkspaceAdmin
+    service_principal_name: ${var.service_principals.sandbox}
   - level: CAN_MANAGE
     group_name: LakehouseSandboxDataEngineer
-  - level: CAN_MANAGE
-    user_name: ${workspace.current_user.userName}
-  - level: CAN_MANAGE
-    group_name: LakehouseEnterpriseWorkspaceDataEngineer
   - level: CAN_VIEW
     group_name: users
-
-  - level: CAN_MANAGE
-    service_principal_name: ${var.service_principals.sandbox}
 
 dev_permissions: &dev_permissions
   - level: CAN_MANAGE

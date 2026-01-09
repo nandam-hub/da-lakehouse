@@ -21,13 +21,11 @@ workspace_config: &workspace_config
 #_permissions: &sandbox_permissions# Permissions (reusable lists). Apply these inside resource definitions.
 sand_permissions: &sandbox_permissions
   - level: CAN_MANAGE
-    user_name: ${workspace.current_user.userName}
+    service_principal_name: ${var.service_principals.sandbox}
   - level: CAN_MANAGE
     group_name: LakehouseSandboxDataEngineer
   - level: CAN_VIEW
     group_name: users
-  - level: CAN_MANAGE
-    service_principal_name: ${var.service_principals.sandbox}
 
 dev_permissions: &dev_permissions
   - level: CAN_MANAGE
@@ -60,15 +58,13 @@ sandbox_variable_block: &sandbox_variable_block
 
 resources:
   jobs:
-    demo_New_job:
-      permissions: *sandbox_permissions
+    demo_New_job: {}
   pipelines:
     my_dlt_pipeline:
       name: "[${var.lh_environment}] DLT Pipeline"
       libraries:
         - notebook:
             path: ./resources/ingestion.ipynb
-      permissions: *sandbox_permissions
 
 test_variable_block: &test_variable_block
   service_principal_object_owner: ${var.service_principals.test}

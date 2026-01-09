@@ -169,19 +169,18 @@ jobs:
       - name: Deploy bundles
         run: |
           TARGET="${{ inputs.environment || 'sandbox' }}"
-          BUNDLE_NAME="${{ inputs.bundle_name || 'drs' }}"  # Default to DRS bundle for sandbox
           echo "Deploying to target: $TARGET"
-
-          if [ -n "$BUNDLE_NAME" ]; then
-            BUNDLE_PATH="bundles/$BUNDLE_NAME"
-            if [ -f "$BUNDLE_PATH/databricks.yml" ]; then
-              echo "Deploying bundle: $BUNDLE_NAME to target: $TARGET"
-              cd "$BUNDLE_PATH"
+          
+          # Deploy all bundles in the bundles directory
+          for bundle_dir in bundles/*/; do
+            if [ -f "$bundle_dir/databricks.yml" ]; then
+              bundle_name=$(basename "$bundle_dir")
+              echo "Deploying bundle: $bundle_name to target: $TARGET"
+              cd "$bundle_dir"
               # Use --force-lock to override existing deployment lock
               databricks bundle deploy --target "$TARGET" --profile "$TARGET" --force-lock
               cd -
             else
-              echo "❌ Bundle not found: $BUNDLE_NAME"
-              exit 1
+              echo "Skipping $(basename "$bundle_dir") - no databricks.yml found"
             fi
-          fi
+          done
