@@ -70,7 +70,7 @@ jobs:
           TARGET="${{ github.event.inputs.environment || 'dev' }}"
           for bundle_dir in bundles/*/; do
             if [ -f "$bundle_dir/databricks.yml" ]; then
-              echo "Deploying bundle: $(basename $bundle_dir) to target: $TARGET"
+              echo "Deploying bundle: $(basename $bundle_dir) to target: $TARGET" --profile dev
               cd "$bundle_dir"
               databricks bundle deploy --target $TARGET
               cd - > /dev/null
