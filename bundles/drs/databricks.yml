@@ -1,4 +1,7 @@
-# databricks.yml
+# ============================================================
+# Bundle Definition
+# ============================================================
+
 bundle:
   name: drs__infra
 
@@ -6,124 +9,83 @@ include:
   - ../_common.yml
   - resources/*.yml
   - resources/*/*.yml
-  #- resources/*/*/*.ipynb
 
-#############################################################################
-### Reusable blocks (anchors)
-#############################################################################
+# ============================================================
+# Shared Workspace Configuration
+# ============================================================
 
-# Workspace settings used by each target
 workspace_config: &workspace_config
-  # host will be set via DATABRICKS_HOST environment variable
-  # Where `databricks bundle deploy` will place the bundle contents
   root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}/
 
-#_permissions: &sandbox_permissions# Permissions (reusable lists). Apply these inside resource definitions.
-sand_permissions: &sandbox_permissions
-  - level: CAN_MANAGE
-    service_principal_name: ${var.service_principals.sandbox}
-  - level: CAN_MANAGE
-    group_name: LakehouseSandboxDataEngineer
-  - level: CAN_VIEW
-    group_name: users
+# ============================================================
+# Default Permissions (User-Based Only)
+# ============================================================
 
-dev_permissions: &dev_permissions
+default_permissions: &default_permissions
   - level: CAN_MANAGE
     user_name: ${workspace.current_user.userName}
-  - level: CAN_VIEW
-    group_name: users
-  - level: CAN_MANAGE
-    service_principal_name: ${var.service_principals.dev}
 
-test_permissions: &test_permissions
-  - level: CAN_MANAGE
-    user_name: ${workspace.current_user.userName}
-  - level: CAN_VIEW
-    group_name: users
-  - level: CAN_MANAGE
-    service_principal_name: ${var.service_principals.test}
+# ============================================================
+# Environment Variable Blocks
+# ============================================================
 
-# Target-specific variable blocks (will merge into targets.variables)
-dev_variable_block: &dev_variable_block
+dev_variables: &dev_variables
   service_principal_object_owner: ${var.service_principals.dev}
   aws_environment: dev
   lh_environment: dev
-  amic_environment: dev # example; change if needed
+  amic_environment: dev
 
-sandbox_variable_block: &sandbox_variable_block
+sandbox_variables: &sandbox_variables
   service_principal_object_owner: ${var.service_principals.sandbox}
-  aws_environment: sandbox # if you intend only 'dev'/'prod', adjust to 'dev' here
+  aws_environment: sandbox
   lh_environment: sandbox
-  amic_environment: sandbox # example; change if needed
+  amic_environment: sandbox
+
+test_variables: &test_variables
+  service_principal_object_owner: ${var.service_principals.test}
+  aws_environment: test
+  lh_environment: test
+  amic_environment: test
+
+# ============================================================
+# Resources
+# ============================================================
 
 resources:
+
   jobs:
-    demo_New_job: {}
+    demo_new_job:
+      name: "[${var.lh_environment}] Demo Job"
+      permissions: *default_permissions
+
   pipelines:
     my_dlt_pipeline:
       name: "[${var.lh_environment}] DLT Pipeline"
       libraries:
         - notebook:
             path: ./resources/ingestion.ipynb
+      permissions: *default_permissions
 
-test_variable_block: &test_variable_block
-  service_principal_object_owner: ${var.service_principals.test}
-  aws_environment: test
-  lh_environment: test
-  amic_environment: test # example; change if needed
-
-#############################################################################
-### Deployment targets
-#############################################################################
+# ============================================================
+# Deployment Targets
+# ============================================================
 
 targets:
+
   dev:
     mode: production
     workspace: *workspace_config
-    permissions: *dev_permissions
     variables:
-      <<: *dev_variable_block
+      <<: *dev_variables
 
   sandbox:
     mode: production
     workspace: *workspace_config
-    permissions: *sandbox_permissions
     variables:
-      <<: *sandbox_variable_block
+      <<: *sandbox_variables
 
   test:
     mode: production
     workspace: *workspace_config
-    permissions: *test_permissions
     variables:
-      <<: *test_variable_block
-#############################################################################
-### Example: apply permissions to a resource per target (optional illustration)
-#############################################################################
-# (Uncomment and adapt to your actual job/pipeline names.)
-#
-# resources:
-#   jobs:
-#     my_job:
-#       name: "[${var.lh_environment}] my_job"
-#       tasks:
-#         - task_key: run
-#           notebook_task:
-#             notebook_path: /Repos/path/to/notebook
-#
-# targets:
-#   dev:
-#     resources:
-#       jobs:
-#         my_job:
-#           permissions: *dev_permissions
-#   sandbox:
-#     resources:
-#       jobs:
-#         my_job:
-#           permissions: *sandbox_permissions
-#   test:
-#     resources:
-#       jobs:
-#         my_job:
-#           permissions: *test_permissions
+      <<: *test_variables
