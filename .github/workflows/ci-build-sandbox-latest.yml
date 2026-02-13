@@ -81,7 +81,7 @@ jobs:
           if [ -f ".github/parameters.yml" ]; then
             AWS_REGION=$(python -c "import yaml; print(yaml.safe_load(open('.github/parameters.yml'))['parameters']['environment_variables']['AWS_REGION'])")
           else
-            AWS_REGION="us-east-1"
+            AWS_REGION="eu-north-1"
           fi
 
           echo "AWS_REGION=$AWS_REGION" >> $GITHUB_ENV

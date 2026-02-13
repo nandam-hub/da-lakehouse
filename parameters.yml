@@ -30,7 +30,7 @@ databricks:
 oidc:
   aws:
     role_arn: arn:aws:iam::389527410754:role/OIDC-GitHub
-    region: us-east-2
+    region: eu-north-1
     session_name: github-action-session
 
   github:
