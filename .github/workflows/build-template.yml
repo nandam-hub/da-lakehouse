@@ -98,19 +98,19 @@ jobs:
           audience: sts.amazonaws.com
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
-      - name: Build Docker image
-        run: |
-          docker build --target production -t ${{ steps.env-vars.outputs.IMAGE_NAME }}:${{ steps.vars.outputs.SHORT_SHA }} .
-      - name: Tag Docker image for ECR
-        run: |
-          docker tag ${{ steps.env-vars.outputs.IMAGE_NAME }}:${{ steps.vars.outputs.SHORT_SHA }} \
-          ${{ steps.env-vars.outputs.ECR_REGISTRY }}:${{ steps.vars.outputs.SHORT_SHA }}
-          docker tag ${{ steps.env-vars.outputs.IMAGE_NAME }}:${{ steps.vars.outputs.SHORT_SHA }} \
-          ${{ steps.env-vars.outputs.ECR_REGISTRY }}:latest
-      - name: Push Docker image to Amazon ECR
-        run: |
-          docker push ${{ steps.env-vars.outputs.ECR_REGISTRY }}:${{ steps.vars.outputs.SHORT_SHA }}
-          docker push ${{ steps.env-vars.outputs.ECR_REGISTRY }}:latest
+      # - name: Build Docker image
+      #   run: |
+      #     docker build --target production -t ${{ steps.env-vars.outputs.IMAGE_NAME }}:${{ steps.vars.outputs.SHORT_SHA }} .
+      # - name: Tag Docker image for ECR
+      #   run: |
+      #     docker tag ${{ steps.env-vars.outputs.IMAGE_NAME }}:${{ steps.vars.outputs.SHORT_SHA }} \
+      #     ${{ steps.env-vars.outputs.ECR_REGISTRY }}:${{ steps.vars.outputs.SHORT_SHA }}
+      #     docker tag ${{ steps.env-vars.outputs.IMAGE_NAME }}:${{ steps.vars.outputs.SHORT_SHA }} \
+      #     ${{ steps.env-vars.outputs.ECR_REGISTRY }}:latest
+      # - name: Push Docker image to Amazon ECR
+      #   run: |
+      #     docker push ${{ steps.env-vars.outputs.ECR_REGISTRY }}:${{ steps.vars.outputs.SHORT_SHA }}
+      #     docker push ${{ steps.env-vars.outputs.ECR_REGISTRY }}:latest
       # - name: Deploy to ECS
       #   run: |
       #     aws ecs update-service --cluster da-lakehouse-cda-dev --service da-lakehouse-cda-dev --force-new-deployment
