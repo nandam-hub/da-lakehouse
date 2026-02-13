@@ -108,9 +108,10 @@ jobs:
             exit 1
           fi
 
-          DATABRICKS_CLIENT_ID=$(echo "$SECRET_SP" | jq -r '.service_principal_sandbox')
-          DATABRICKS_CLIENT_SECRET=$(echo "$SECRET_SP" | jq -r '.client_secret')
-          DATABRICKS_HOST=$(echo "$SECRET_SP" | jq -r '.databricks_host_sandbox')
+          DATABRICKS_HOST=$(echo "$SECRET_SP" | jq -r '.DATABRICKS_HOST // empty')
+          DATABRICKS_CLIENT_ID=$(echo "$SECRET_SP" | jq -r '.DATABRICKS_CLIENT_ID // empty')
+          DATABRICKS_CLIENT_SECRET=$(echo "$SECRET_SP" | jq -r '.DATABRICKS_CLIENT_SECRET // empty')
+
 
           if [ "$DATABRICKS_CLIENT_ID" = "null" ] || [ "$DATABRICKS_CLIENT_SECRET" = "null" ] || [ "$DATABRICKS_HOST" = "null" ]; then
             echo "❌ Required fields missing in secret"
