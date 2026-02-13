@@ -107,11 +107,11 @@ jobs:
             exit 1
           fi
 
-          SERVICE_PRINCIPAL=$(echo "$SECRET_SP" | jq -r '.service_principal_sandbox')
-          CLIENT_SECRET=$(echo "$SECRET_SP" | jq -r '.client_secret')
+          DATABRICKS_CLIENT_ID=$(echo "$SECRET_SP" | jq -r '.service_principal_sandbox')
+          DATABRICKS_CLIENT_SECRET=$(echo "$SECRET_SP" | jq -r '.client_secret')
           DATABRICKS_HOST=$(echo "$SECRET_SP" | jq -r '.databricks_host_sandbox')
 
-          if [ "$SERVICE_PRINCIPAL" = "null" ] || [ "$CLIENT_SECRET" = "null" ] || [ "$DATABRICKS_HOST" = "null" ]; then
+          if [ "$DATABRICKS_CLIENT_ID" = "null" ] || [ "$DATABRICKS_CLIENT_SECRET" = "null" ] || [ "$DATABRICKS_HOST" = "null" ]; then
             echo "❌ Required fields missing in secret"
             exit 1
           fi
@@ -121,8 +121,8 @@ jobs:
           echo "[sandbox]" > $HOME/.databrickscfg
           echo "host = $DATABRICKS_HOST" >> $HOME/.databrickscfg
           echo "auth_type = oauth-m2m" >> $HOME/.databrickscfg
-          echo "client_id = $SERVICE_PRINCIPAL" >> $HOME/.databrickscfg
-          echo "client_secret = $CLIENT_SECRET" >> $HOME/.databrickscfg
+          echo "client_id = $DATABRICKS_CLIENT_ID" >> $HOME/.databrickscfg
+          echo "client_secret = $DATABRICKS_CLIENT_SECRET" >> $HOME/.databrickscfg
 
           echo "DATABRICKS_HOST=$DATABRICKS_HOST" >> $GITHUB_ENV
 
