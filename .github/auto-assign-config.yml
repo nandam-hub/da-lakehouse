@@ -1,11 +1,30 @@
+# addReviewers: true
+# addAssignees: false
+# numberOfReviewers: 1
+
+# reviewers:
+#   - data-platform-lead
+#   - senior-data-engineer
+#   - platform-architect
+
+# assignees: []
+
+# skipKeywords:
+#   - wip
+#   - draft
+
+# filterLabels:
+#   include:
+#     - ready-for-review
+#   exclude:
+#     - work-in-progress
+
 addReviewers: true
 addAssignees: false
-numberOfReviewers: 2
+numberOfReviewers: 1
 
 reviewers:
-  - data-platform-lead
-  - senior-data-engineer
-  - platform-architect
+  - nandam-hub
 
 assignees: []
 
@@ -18,3 +37,4 @@ filterLabels:
     - ready-for-review
   exclude:
     - work-in-progress
+

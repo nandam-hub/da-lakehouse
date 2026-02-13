@@ -3,9 +3,9 @@ databricks:
   # Environment-specific configurations
   environments:
     sandbox:
-      host: https://dbc-0c2248b3-6656.cloud.databricks.com
-      client_id: 111986ad-4fc6-45b4-9469-e7c7c581cbb6
-      client_secret: dose9b72dea76c379efe05c765be4c9bde18 # pragma: allowlist secret
+      host: https://dbc-f7a333f8-6cdd.cloud.databricks.com
+      client_id: a0a83729-f6b5-4f85-bf22-699bbe7feb6a
+      client_secret: dose745470e79abf106e183467d916b68537 # pragma: allowlist secret
       auth_type: oauth-m2m
 
     dev:
@@ -29,12 +29,12 @@ databricks:
 # OIDC Configuration for GitHub Actions
 oidc:
   aws:
-    role_arn: arn:aws:iam::125067017412:role/GA-OIDC-admin
+    role_arn: arn:aws:iam::389527410754:role/OIDC-GitHub
     region: us-east-2
     session_name: github-action-session
 
   github:
-    repository: amic-app/da-lakehouse-raw
+    repository: nandam-hub/da-lakehouse
     ref: refs/heads/main
 
 # Service Principal Mappings
@@ -46,7 +46,7 @@ service_principals:
 
 # AWS Secrets Manager Configuration
 secrets:
-  databricks_credentials: assetbundle-sandbox-credentials
+  databricks_credentials: databricks-serviceprincipal-dev
   service_principal_sandbox: ${SERVICE_PRINCIPAL_SANDBOX_SECRET}
   service_principal_dev: eb479c40-27ab-4f3a-90cd-14eafd1f7433
   client_secret_dev: dosec76a7f61f23ab42b966af7c29edb89bb
@@ -55,4 +55,4 @@ secrets:
 deployment:
   default_target: sandbox
   workspace_root: /Workspace/deployment
-  bundle_name: da-lakehouse-raw
+  bundle_name: da-lakehouse

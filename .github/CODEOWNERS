@@ -1,4 +1,4 @@
-# Global owners
+<!-- # Global owners
 #* @data-platform-team
 
 # Bundle configurations require data engineering review
@@ -11,7 +11,7 @@ docker-compose.yml @devops-team -->
 
 # Security and compliance
 <!-- scripts/pii_scanner.py @security-team @data-engineering-team
-.pre-commit-config.yaml @security-team @devops-team -->
+.pre-commit-config.yaml @security-team @devops-team
 
 # Documentation
 *.md @data-platform-team @technical-writers
@@ -22,4 +22,10 @@ docker-compose.yml @devops-team -->
 #* @PEvuri1534_amic
 
 # Default owners for everything (Team)
-* @amerisure/enterprise-lakehouse
+* @amerisure/enterprise-lakehouse -->
+# ===============================
+# CODEOWNERS File
+# ===============================
+
+# Default owner for entire repository
+* @nandam-hub

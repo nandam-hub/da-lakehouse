@@ -96,7 +96,7 @@ jobs:
       - name: Get Databricks credentials from AWS Secrets Manager
         id: get-secrets
         run: |
-          SECRET_NAME="assetbundle-sandbox-credenttials"
+          SECRET_NAME="databricks-serviceprincipal-dev"
           echo "Fetching secret from AWS Secrets Manager: $SECRET_NAME"
 
           SECRET_SP=$(aws secretsmanager get-secret-value \
@@ -170,7 +170,7 @@ jobs:
         run: |
           TARGET="${{ inputs.environment || 'sandbox' }}"
           echo "Deploying to target: $TARGET"
-          
+
           # Deploy all bundles in the bundles directory
           for bundle_dir in bundles/*/; do
             if [ -f "$bundle_dir/databricks.yml" ]; then

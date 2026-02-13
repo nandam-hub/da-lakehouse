@@ -15,7 +15,7 @@ variables:
     description: "Service Principal mapping by lh_environment"
     type: complex
     default:
-      sandbox: 111986ad-4fc6-45b4-9469-e7c7c581cbb6
+      sandbox: a0a83729-f6b5-4f85-bf22-699bbe7feb6a
       #dev: 111986ad-4fc6-45b4-9469-e7c7c581cbb6
       #dev: 8323ced5-d447-4a03-b1c9-243d5fae00c5 # enterprise_object_owner_dev
       #test: fb3648e1-7d19-4a94-a4db-5f69eaf8cf8b # enterprise_object_owner_test
@@ -28,15 +28,15 @@ variables:
 
   databricks_host:
     description: "Databricks workspace host URL"
-    default: "https://dbc-0c2248b3-6656.cloud.databricks.com"
+    default: "https://dbc-f7a333f8-6cdd.cloud.databricks.com"
 
   databricks_client_id:
     description: "Databricks OAuth client ID"
-    default: "111986ad-4fc6-45b4-9469-e7c7c581cbb6"
+    default: "a0a83729-f6b5-4f85-bf22-699bbe7feb6a"
 
   databricks_client_secret:
     description: "Databricks OAuth client secret"
-    default: "dose9b72dea76c379efe05c765be4c9bde18" # pragma: allowlist secret
+    default: "dose745470e79abf106e183467d916b68537" # pragma: allowlist secret
 
   amic_environment:
     description: "AMIC environment name for schema suffix (e.g., sandbox, dev, test, qas, prod)"
