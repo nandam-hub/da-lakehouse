@@ -4,7 +4,7 @@ resources:
       #name: guidewire_${var.amic_environment}
       name: guidewire_cda
       #catalog_name: ${var.lh_environment}_raw
-      catalog_name: dataandanalytics
+      catalog_name: my_new_catalog
       comment: "Schema to house the raw Guidewire CDA Volumes for AMIC environment ${var.amic_environment}"
       grants:
         # Will need MANAGE permission on the schema to create volumes in it.
