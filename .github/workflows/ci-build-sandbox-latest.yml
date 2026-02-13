@@ -46,7 +46,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Python 3.11
-        shell: powershell
+        shell: bash
         run: |
           if ! command -v python3.11 &> /dev/null; then
             echo "Installing Python 3.11..."
