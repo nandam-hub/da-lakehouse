@@ -58,13 +58,22 @@ resources:
       name: "[${var.lh_environment}] Demo Job"
       permissions: *default_permissions
 
+  # pipelines:
+  #   my_dlt_pipeline:
+  #     name: "[${var.lh_environment}] DLT Pipeline"
+  #     libraries:
+  #       - notebook:
+  #           path: ./resources/ingestion.ipynb
+  #     permissions: *default_permissions
+
   pipelines:
     my_dlt_pipeline:
       name: "[${var.lh_environment}] DLT Pipeline"
+      serverless: true   # 👈 ADD THIS
       libraries:
-        - notebook:
-            path: ./resources/ingestion.ipynb
-      permissions: *default_permissions
+      - notebook:
+          path: ./resources/ingestion.ipynb
+
 
 # ============================================================
 # Deployment Targets
