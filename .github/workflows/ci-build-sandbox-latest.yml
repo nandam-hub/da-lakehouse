@@ -1,187 +1,85 @@
-name: CI-Build Sandbox Latest
+deploy:
+  needs: build
+  runs-on: self-hosted
+  timeout-minutes: 60
 
-on:
-  workflow_call:
-    inputs:
-      environment:
-        description: "Target environment"
-        required: false
-        type: string
-        default: "sandbox"
-      bundle_name:
-        description: "Specific bundle to deploy (optional)"
-        required: false
-        type: string
-        default: ""
-  push:
-    branches:
-      - "**"
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: "Target environment"
-        required: false
-        type: choice
-        options:
-          - sandbox
-        default: "sandbox"
+  defaults:
+    run:
+      shell: bash
 
-permissions:
-  id-token: write
-  contents: read
-  security-events: write
+  permissions:
+    contents: read
+    id-token: write
 
-jobs:
-  build:
-    uses: ./.github/workflows/build-template.yml
-    with:
-      environment: ${{ inputs.environment || 'sandbox' }}
-      image_tag: "latest"
-    secrets: inherit
-    permissions:
-      contents: read
-      id-token: write
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-  deploy:
-    needs: build
-    # runs-on: codebuild-poc-github-runner-${{ github.run_id }}-${{ github.run_attempt }}
-    runs-on: self-hosted
-    timeout-minutes: 60
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
 
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Install dependencies
+      run: |
+        pip install PyYAML jq
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.x"
+    - name: Load AWS Region
+      id: load-region
+      run: |
+        if [ -f ".github/parameters.yml" ]; then
+          AWS_REGION=$(python -c "import yaml; print(yaml.safe_load(open('.github/parameters.yml'))['parameters']['environment_variables']['AWS_REGION'])")
+        else
+          AWS_REGION="us-east-1"
+        fi
+        echo "AWS_REGION=$AWS_REGION" >> $GITHUB_ENV
+        echo "aws-region=$AWS_REGION" >> $GITHUB_OUTPUT
 
-      - name: Install AWS CLI v2
-        run: |
-          if ! command -v aws &> /dev/null; then
-            echo "Installing AWS CLI v2..."
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            sudo ./aws/install
-          else
-            echo "AWS CLI already installed: $(aws --version)"
+    - name: Configure AWS Credentials (OIDC)
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+        aws-region: ${{ steps.load-region.outputs.aws-region }}
+
+    - name: Get Databricks credentials
+      id: get-secrets
+      run: |
+        SECRET_NAME="databricks-serviceprincipal-dev"
+
+        SECRET_SP=$(aws secretsmanager get-secret-value \
+          --secret-id "$SECRET_NAME" \
+          --query 'SecretString' \
+          --output text)
+
+        SERVICE_PRINCIPAL=$(echo "$SECRET_SP" | jq -r '.service_principal_sandbox')
+        CLIENT_SECRET=$(echo "$SECRET_SP" | jq -r '.client_secret')
+        DATABRICKS_HOST=$(echo "$SECRET_SP" | jq -r '.databricks_host_sandbox')
+
+        mkdir -p ~/.databricks
+
+        cat > ~/.databrickscfg << EOF
+        [sandbox]
+        host = $DATABRICKS_HOST
+        auth_type = oauth-m2m
+        client_id = $SERVICE_PRINCIPAL
+        client_secret = $CLIENT_SECRET
+        EOF
+
+        echo "DATABRICKS_HOST=$DATABRICKS_HOST" >> $GITHUB_ENV
+
+    - name: Install Databricks CLI
+      run: |
+        curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+        echo "$HOME/.databricks/bin" >> $GITHUB_PATH
+
+    - name: Deploy bundles
+      run: |
+        TARGET="sandbox"
+
+        for bundle_dir in bundles/*/; do
+          if [ -f "$bundle_dir/databricks.yml" ]; then
+            cd "$bundle_dir"
+            databricks bundle deploy --target "$TARGET" --profile "$TARGET" --force-lock
+            cd -
           fi
-          aws --version
-
-      - name: Install PyYAML
-        run: pip install PyYAML
-
-      - name: Load AWS Region
-        id: load-region
-        run: |
-          if [ -f ".github/parameters.yml" ]; then
-            AWS_REGION=$(python -c "import yaml; print(yaml.safe_load(open('.github/parameters.yml'))['parameters']['environment_variables']['AWS_REGION'])")
-          else
-            echo "❌ parameters.yml not found"
-            AWS_REGION="us-east-1"  # Default region
-          fi
-          echo "AWS_REGION=$AWS_REGION" >> $GITHUB_ENV
-          echo "aws-region=$AWS_REGION" >> $GITHUB_OUTPUT
-
-      - name: Configure AWS Credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
-          aws-region: ${{ steps.load-region.outputs.aws-region }}
-          audience: sts.amazonaws.com
-
-      - name: Get Databricks credentials from AWS Secrets Manager
-        id: get-secrets
-        run: |
-          SECRET_NAME="databricks-serviceprincipal-dev"
-          echo "Fetching secret from AWS Secrets Manager: $SECRET_NAME"
-
-          SECRET_SP=$(aws secretsmanager get-secret-value \
-            --secret-id "$SECRET_NAME" \
-            --query 'SecretString' \
-            --output text \
-            --region "${{ steps.load-region.outputs.aws-region }}")
-
-          if [ -z "$SECRET_SP" ]; then
-            echo "❌ Failed to retrieve secret from AWS Secrets Manager"
-            exit 1
-          fi
-
-          echo "Secret retrieved successfully"
-
-          ENVIRONMENT="${{ inputs.environment || 'sandbox' }}"
-          echo "Target environment: $ENVIRONMENT"
-
-          # Extract fields using jq
-          SERVICE_PRINCIPAL=$(echo "$SECRET_SP" | jq -r '.service_principal_sandbox')
-          CLIENT_SECRET=$(echo "$SECRET_SP" | jq -r '.client_secret')
-          DATABRICKS_HOST=$(echo "$SECRET_SP" | jq -r '.databricks_host_sandbox')
-
-          echo "=== Extracted Values ==="
-          echo "Service principal: $SERVICE_PRINCIPAL"
-          echo "Host: $DATABRICKS_HOST"
-          echo "Client secret length: ${#CLIENT_SECRET}"
-
-          if [ "$SERVICE_PRINCIPAL" = "null" ] || [ "$CLIENT_SECRET" = "null" ] || [ "$DATABRICKS_HOST" = "null" ]; then
-            echo "❌ Missing required fields in secret"
-            echo "Available keys in secret: $(echo "$SECRET_SP" | jq -r 'keys | join(", ")')"
-            exit 1
-          fi
-
-          # Create Databricks config
-          mkdir -p ~/.databricks
-          cat > ~/.databrickscfg << EOF
-          [${{ inputs.environment || 'sandbox' }}]
-          host = $DATABRICKS_HOST
-          auth_type = oauth-m2m
-          client_id = $SERVICE_PRINCIPAL
-          client_secret = $CLIENT_SECRET
-          EOF
-
-          echo "Databricks config written to: ~/.databrickscfg"
-          echo "DATABRICKS_HOST=$DATABRICKS_HOST" >> $GITHUB_ENV
-
-      - name: Verify Databricks Profile
-        run: |
-          echo "=== Verifying Databricks Profile ==="
-          if [ -f ~/.databrickscfg ]; then
-            echo "Config file exists: ~/.databrickscfg"
-            cat ~/.databrickscfg
-            if grep -q "\[sandbox\]" ~/.databrickscfg; then
-              echo "✅ Sandbox profile found"
-            else
-              echo "❌ Sandbox profile NOT found"
-              exit 1
-            fi
-          else
-            echo "❌ Config file does not exist at ~/.databrickscfg"
-            exit 1
-          fi
-
-      - name: Install Databricks CLI
-        run: |
-          curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
-          echo "$HOME/.databricks/bin" >> $GITHUB_PATH
-
-      - name: Deploy bundles
-        run: |
-          TARGET="${{ inputs.environment || 'sandbox' }}"
-          echo "Deploying to target: $TARGET"
-
-          # Deploy all bundles in the bundles directory
-          for bundle_dir in bundles/*/; do
-            if [ -f "$bundle_dir/databricks.yml" ]; then
-              bundle_name=$(basename "$bundle_dir")
-              echo "Deploying bundle: $bundle_name to target: $TARGET"
-              cd "$bundle_dir"
-              # Use --force-lock to override existing deployment lock
-              databricks bundle deploy --target "$TARGET" --profile "$TARGET" --force-lock
-              cd -
-            else
-              echo "Skipping $(basename "$bundle_dir") - no databricks.yml found"
-            fi
-          done
+        done
