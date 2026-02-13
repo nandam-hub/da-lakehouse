@@ -21,8 +21,8 @@ parameters:
       default: "latest"
 
   environment_variables:
-    ECR_REGISTRY: "125067017412.dkr.ecr.us-east-2.amazonaws.com/dasandboxecr"
-    AWS_REGION: "us-east-2"
+    ECR_REGISTRY: "125067017412.dkr.ecr.us-eu-north-1.amazonaws.com/dasandboxecr"
+    AWS_REGION: "us-eu-north-1"
     IMAGE_NAME: "dasandboxecr"
 
   linting:
