@@ -102,6 +102,7 @@ jobs:
             --query 'SecretString' \
             --output text)
 
+            echo "$SECRET_SP" | jq 'keys'
           if [ -z "$SECRET_SP" ]; then
             echo "❌ Secret retrieval failed"
             exit 1
