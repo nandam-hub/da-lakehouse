@@ -53,10 +53,20 @@ test_variables: &test_variables
 
 resources:
 
+  resources:
+
   jobs:
-    demo_new_job:
-      name: "[${var.lh_environment}] Demo Job"
-      permissions: *default_permissions
+    demo_job:
+      name: "Demo Job"
+
+      tasks:
+        - task_key: run_notebook
+          notebook_task:
+            notebook_path: ./resources/ingestion.ipynb
+  # jobs:
+  #   demo_new_job:
+  #     name: "[${var.lh_environment}] Demo Job"
+  #     permissions: *default_permissions
 
   pipelines:
     my_dlt_pipeline:
