@@ -44,7 +44,8 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: codebuild-poc-github-runner-${{ github.run_id }}-${{ github.run_attempt }}
+    # runs-on: codebuild-poc-github-runner-${{ github.run_id }}-${{ github.run_attempt }}
+    runs-on: self-hosted
     timeout-minutes: 60
 
     permissions:
